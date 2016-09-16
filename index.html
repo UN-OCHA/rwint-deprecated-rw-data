@@ -7,10 +7,11 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+		<link rel="stylesheet" href="https://reliefweb.github.io/rw-trends-v3/styles/rwlabsstyle.css">
 		<link rel="stylesheet" href="./styles/bootstrap.min.css">
+		<link rel="stylesheet" href="./styles/bootstrap-datepicker.min.css">
 		<link rel="stylesheet" href="./styles/select2.min.css">
 		<link rel="stylesheet" href="./styles/app.css">
-		<link rel="stylesheet" href="./styles/rwlabsstyle.css">
 	</head>
 
 	<body>
@@ -96,13 +97,23 @@
 					<option>All</option>
 				</select>
 			</li>
-			<li>
-				<label for="dateCreatedFilter">Date Created</label>
-				<select id="dateCreatedFilter" data-mode="created" data-dimension="" data-gadimension="dimension13" class="dropdown time-filter created-date-dropdown"><option>All</option></select>
+			<li class="dateCreatedFilter">
+				<label>Date Created</label>
+				<div id="dateCreatedPicker" data-mode="created" data-dimension="" data-gadimension="dimension13" class="input-group input-daterange">
+				    <input type="text" id="created_startDate" class="form-control start-date" value="" placeholder="All">
+				    <span class="input-group-addon">to</span>
+				    <input type="text" id="created_endDate" class="form-control end-date" value="" placeholder="All">
+				</div>
+				<div class="submit-btn"></div>
 			</li>
-			<li class="dateRangeFilter">
-				<label for="dateVisitedFilter">Date Visited</label>
-				<select id="dateVisitedFilter" data-mode="visited" data-dimension="" data-gadimension="" class="dropdown time-filter visited-date-dropdown"></select>
+			<li class="dateVisitedFilter">
+				<label>Date Visited</label>
+				<div id="dateVisitedPicker" data-mode="visited" data-dimension="" data-gadimension="" class="input-group input-daterange">
+				    <input type="text" id="visited_startDate" class="form-control start-date" value="" placeholder="All">
+				    <span class="input-group-addon">to</span>
+				    <input type="text" id="visited_endDate" class="form-control end-date" value="" placeholder="All">
+				</div>
+				<div class="submit-btn"></div>
 			</li>
 		</ul>
 		
@@ -253,6 +264,7 @@
 		<script src="./vendors/select2.min.js"></script>
 		<script src="./vendors/tether.min.js"></script>
 		<script src="./vendors/bootstrap.min.js"></script>
+		<script src="./vendors/bootstrap-datepicker.min.js"></script>
 		<script src="./vendors/d3.min.js"></script>
 		<script src="./vendors/URI.min.js"></script>
 		<script src="./vendors/jsrsasign-latest-all-min.js"></script>

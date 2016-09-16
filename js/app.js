@@ -14,13 +14,13 @@ var Util = function() {
 			var d = new Date();
 		    var currYear = d.getFullYear();
 		    var currMth = d.getMonth()+1;
-			var start = self.formatDate(currYear, currMth, 1);
-			var end = self.formatDate(currYear, currMth, util.getDaysInMonth(currYear, currMth));
-			return { start_date: start, end_date: end };
+		    var currDay = d.getDate();
+			var start = self.formatDate(currYear + '-' + ("00" + currMth).slice(-2) + '-01');
+			var end = self.formatDate(currYear + '-' + ("00" + currMth).slice(-2) + '-' + ("00" + currDay).slice(-2));
+			return { 'start_date': start, 'end_date': end };
 		},
-	    formatDate: function(year, month, day) {
-	        var date = "T00:00:00+0000";
-	        return year + "-" + ("00" + month).slice(-2) + '-' + ("00" + day).slice(-2) + date;
+	    formatDate: function(d) {
+	        return d + "T00:00:00+0000";
 	    },
 	    getDaysInMonth: function(year, month) {
 			return new Date(year, month, 0).getDate();
@@ -63,31 +63,47 @@ $(document).ready(initUtil);
 (function() {
 	var filters = window.filters = {
 
-	    d: new Date(),
-	    startYear: 1996,
-        filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
-	    currYear: '',
-	    currMth: '',  
-	    visitedDate: '',
-	    createdDate: '',
-	    //create month array formatted for select2
-	    month: [{id:1, text:"Jan"},{id:2, text:"Feb"},{id:3, text:"Mar"},{id:4, text:"Apr"},{id:5, text:"May"},{id:6, text:"Jun"},{id:7, text:"Jul"},{id:8, text:"Aug"},{id:9, text:"Sep"},{id:10, text:"Oct"},{id:11, text:"Nov"},{id:12, text:"Dec"}],
+	    filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
 	    contentType: 'reports',
 	    rwURL: '',
 	    currScroll: 0,
 
 	    init: function(){
-	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
+	    	filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
 
 	    	//init filter vars
-	    	filters.currYear = filters.d.getFullYear();
-	    	filters.currMth = filters.d.getMonth()+1;
-	        filters.visitedDate = filters.currYear + '-' + filters.month[filters.currMth-1].id;
 	        var d = util.getStartEndDate();
             filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, dimensions:[]};
             filters.filterParams.dimensions.push({dimension:'', gadimension:'dimension1', value:'Report'});
 
-            //mobile events
+	        //init filters
+	        filters.initSelectFilters();
+	        //filters.initTimeFilters();
+
+	        //init clear filters button
+	        $('.clear-filters-btn').on('click', function(){
+	        	filters.resetAllFilters();
+	        });
+
+			//hide filters for short delay while components resolve
+	        $('.filter-menu').css('opacity',0).delay(1).queue(function(next){
+	        	$('.jobs-sources, .training-sources').hide();
+	        	$('.jobs-filters, .training-filters').hide();
+			    if (util.getMetric()!='sessions') $('.dateVisitedFilter').hide(0);
+			    next();
+			});
+
+	        //show filters on GA ready event
+	        $(document).on( "gaReady", function(e) {
+			    //get querystring
+	        	filters.getQuery();
+
+	        	//show filters
+	        	$('.filter-menu').animate({ opacity: 1 }, 300);
+	        	$('.filters').find('.loading').remove();
+	        });
+
+	        //mobile events
             if (util.isMobile()){
 	            $('.filter-mobile').on('click', function(e){
 	            	e.preventDefault();
@@ -113,35 +129,9 @@ $(document).ready(initUtil);
 	            //     }
 	            // });
             }
-
-	        //init filters
-	        filters.initSelectFilters();
-	        filters.initTimeFilters();
-
-	        //init clear filters button
-	        $('.clear-filters-btn').on('click', function(){
-	        	filters.resetAllFilters();
-	        });
-
-			//hide filters for short delay while components resolve
-	        $('.filter-menu').css('opacity',0).delay(1).queue(function(next){
-	        	$('.jobs-sources, .training-sources').hide();
-	        	$('.jobs-filters, .training-filters').hide();
-			    $('.dateRangeFilter').addClass('inactive');
-			    next();
-			});
-
-	        //show filters on GA ready event
-	        $(document).on( "gaReady", function(e) {
-			    //get querystring
-	        	filters.getQuery();
-
-	        	//show filters
-	        	$('.filter-menu').animate({ opacity: 1 }, 300);
-	        	$('.filters').find('.loading').remove();
-	        });
 	    },
 
+	    //mobile filter toggle 
 	    filterToggle: function(){
         	if ($('.filters').hasClass('expanded')){
         		$('.filters').removeClass('expanded');
@@ -238,7 +228,7 @@ $(document).ready(initUtil);
 
 	        //jobs filters
 	        filters.contentType = 'jobs';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
 	        var typeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(typeData, function(obj) {
 	            $.each(obj.embedded.facets.type.data, function(key, val) {
@@ -262,7 +252,7 @@ $(document).ready(initUtil);
 
 	        //training filters
 	        filters.contentType = 'training';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
 	        var costData = filters.rwURL + '&facets[0][field]=cost&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(costData, function(obj) {
 	            $.each(obj.embedded.facets.cost.data, function(key, val) {
@@ -291,6 +281,26 @@ $(document).ready(initUtil);
 	            });
 	        });
 
+	        //init datepicker
+	        $('.input-daterange').datepicker({
+	        	autoclose: true,
+	        	clearBtn: true,
+	        	disableTouchKeyboard: true,
+	        	format: 'yyyy-mm-dd',
+	        	startDate: '1996-01-01',
+	        	endDate: '0d'
+	        }).on('clearDate', function(e){
+	        	$('.input-daterange input').each(function() {
+				    $(this).datepicker('clearDates');
+				});
+	        });
+	        $('.submit-btn').click(function(){
+	        	var daterange = $(this).parent().find('.input-daterange');
+	        	if (daterange.find('input').val()!=''){
+	        		filters.onFilterSelect(daterange);
+	        	}
+	        });
+
 	        // dropdown select listener
 	        $('.dropdown').on('change', function(e){ 
 	        	filters.onFilterSelect(e.currentTarget);
@@ -302,49 +312,16 @@ $(document).ready(initUtil);
 	        });
 	    },
 
-	    initTimeFilters: function(){
-	    	//DATE CREATED FILTER
-	        //date created array formatted for select2
-	        var created_date = [];
-	        var count = 1;
-	        for (var i=filters.currYear; i>=filters.startYear; i--){
-	        	var mth = (i==filters.currYear) ? filters.currMth : filters.month.length;
-	        	for (var j=mth; j>0; j--){
-	        		created_date.push({id:i+'-'+("00" + j).slice(-2), text: filters.month[j-1].text+' - '+i});
-	        		count++;
-	        	}
-	        }
-	        //populate created date filter
-	        $(".created-date-dropdown").select2({
-	            data: created_date
-	        });
-
-
-	        //DATE VISITED FILTER
-	        //date visited array formatted for select2
-	        var visited_date = [];
-	        var minMonth = 3;
-	        var minYear = 2016;
-	        count = 1;
-	        for (var k=filters.currYear; k>=minYear; k--){
-	        	mth = (k==minYear) ? minMonth : 1;
-	        	for (var l=filters.currMth; l>mth; l--){
-	        		visited_date.push({id:k+'-'+l, text: filters.month[l-1].text+' - '+k});
-	        		count++;
-	        	}
-	        }
-	        //populate visited date filter
-	        $(".visited-date-dropdown").select2({
-	            data: visited_date
-	        });
-	    },
-
 	    onMetricSelect: function(){
 	    	//reset date visited filter if metric is content published
 			if (util.getMetric()=="content published"){
 				var d = util.getStartEndDate();
 				filters.filterParams.visited_startDate = d.start_date; 
 				filters.filterParams.visited_endDate = d.end_date;
+				$('.dateVisitedFilter').hide(0);
+			}
+			else{
+				$('.dateVisitedFilter').show(0);
 			}
 
 			//set query
@@ -357,10 +334,9 @@ $(document).ready(initUtil);
 	    },
 
 	    onFilterSelect: function(target){
-	    	filters.filterParams.metric = util.getMetric();
+			filters.filterParams.metric = util.getMetric();
     		filters.filterParams.content_type = $('.content_type-dropdown').val();
             filters.filterParams.dimensions = [];
-            filters.createdDate = '';
             filters.filterParams.created_startDate = '';
 	        filters.filterParams.created_endDate = '';
             $.each($('.dropdown'), function(id, item) {
@@ -374,11 +350,6 @@ $(document).ready(initUtil);
                 		val = filters.setContentTypeFilters(val);
                 	}
 
-                	//set date range filters
-                	if ($(item).hasClass('time-filter')){
-                		filters.getTimeInterval($(item).val(), $(item).attr('data-mode'));
-                	}
-
                 	//save params to filter object
                 	filters.filterParams.dimensions.push({dimension:$(item).attr('data-dimension'), gadimension:$(item).attr('data-gadimension'), value:val});
                	}
@@ -387,6 +358,13 @@ $(document).ready(initUtil);
                 	$(item).parent().find('.select2-selection__rendered').removeClass('active');
                	}
             });
+
+            //get date range input values
+            if ($(target).hasClass('input-daterange') && $(target).is(':visible')){
+        		//filters.getTimeInterval({'startDate': $(target).find('.start-date').val(), 'endDate': $(target).find('.end-date').val(), 'mode': $(target).attr('data-mode')});
+        		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
+            	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
+        	}
             
   			//send the apply filters event
             filters.applyFilters();
@@ -433,6 +411,7 @@ $(document).ready(initUtil);
 	    			if (result[key]!=undefined){
 	    				if (key=="metric"){
 	    					$('input:radio[value="' + result[key] + '"]').prop('checked', true);
+	    					if (result[key]=='sessions') $('.dateVisitedFilter').show(0);
 		    			}
 	    				else if (key.indexOf('dimension') >= 0){
 	    					var dim = key.split('-')[1];
@@ -455,13 +434,10 @@ $(document).ready(initUtil);
     						filters.filterParams[key] = result[key];
 						}
 						else{
-	    					var item = $('select[data-mode="' + type + '"]');
-	    					var type = key.split('_')[0];
-	    					var split = result[key].split('-');
-	    					var d = split[0]+'-'+split[1];
-
-	    					//set filter dropdown to value
-     						filters.setFilter(item, d);
+							//set date filters
+	    					var r = result[key].split('T');
+	    					var date = r[0].replace(/-/g, '\/').replace(/T.+/, '');
+	    					$('[data-mode="' + key.split('_')[0] + '"]').data("datepicker").pickers[1].setDate(new Date(date));
 
      						//save params to filter object
 							filters.filterParams[key] = result[key];
@@ -504,6 +480,7 @@ $(document).ready(initUtil);
 			filters.setFilter($('.dropdown'), 'All');
 			filters.setFilter($('.content_type-dropdown'), 'reports');
 			filters.setFilter($('.visited-date-dropdown'), $('.visited-date-dropdown option:first-child').val());
+			filters.setContentTypeFilters('reports');
 			var d = util.getStartEndDate();
  	       	filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, created_startDate: '', created_endDate: '', dimensions:[]};
     		filters.clearQuery();       
@@ -527,45 +504,10 @@ $(document).ready(initUtil);
 	    applyFilters: function(){
 	    	//send the apply filters event
 			$(document).trigger('applyFilters');
-	    },
-
-	    getTimeInterval: function(d, mode){
-	    	var dateValue = (mode == 'visited') ? filters.visitedDate : filters.createdDate;
-	        if (dateValue != d){
-	            dateValue = d;
-	            var date = dateValue.split('-');
-	            var m = 1;
-	            for (var i=0; i<filters.month.length; i++){
-	                if (date[1] == filters.month[i].id){
-	                    m = filters.month[i].id;
-	                    break;
-	                }
-	            }
-	            var y = date[0];
-	            var start_date = util.formatDate(y, m, 1);
-	            // if (m==12){
-	            //     m = 0;
-	            //     y = Number(y)+1;
-	            // }
-	            //select one month intervals for now
-	            var end_date = util.formatDate(y, m, util.getDaysInMonth(y, m));
-
-	            if (mode == 'visited'){
-	            	filters.visitedDate = dateValue;
-	            	filters.filterParams.visited_startDate = start_date;
-	            	filters.filterParams.visited_endDate = end_date;
-	            }
-	            else{
-	            	filters.createdDate = dateValue;
-	            	filters.filterParams.created_startDate = start_date;
-	            	filters.filterParams.created_endDate = end_date;
-	            }
-	        }
 	    }
 
 	};
 })();
-
 $(document).ready(function() {
 
 	var userDimensions = [{id:"country", name:"user_country", title:"User Country", type:"bar", count:5},
@@ -624,21 +566,16 @@ $(document).ready(function() {
 		//$(container).empty();
 		$(container).append('<h2>User Data</h2>');
 		for (var i=0; i<dimensions.length; i++){
-            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
         }
 	}
 
 	function getUserCharts(){
 		$('.user-chart').parent().removeClass('nodata').addClass('loading');
-		$('.user-container').find('h2').html('User Data <span>(' + getDate() + ')</span>');
+		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
 		for (var i=0; i<userDimensions.length; i++){
 			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
 		}
-	}
-
-	function getDate(){
-		var d = filters.filterParams.visited_startDate.split('-');
-		return filters.month[d[1]-1].text + ' ' + d[0];
 	}
 
 	function writeSampleData(element, sampleObj){
@@ -672,7 +609,8 @@ $(document).ready(function() {
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
 		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + '<hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		
 		writeSampleData($(chartName).parent().parent(), sampleObj);
 	
 		//define ranges
@@ -733,7 +671,7 @@ $(document).ready(function() {
 	function updateBarChart(data, dimensionObj, sampleObj, topTotal){
 		var chartName = '.' + dimensionObj.name;
 		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + '<hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
 		writeSampleData($(chartName).parent().parent(), sampleObj);
 
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -817,7 +755,7 @@ $(document).ready(function() {
 	function drawPieChart(data, dimensionObj, total, sampleObj){
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
-		$(chartName).parent().parent().find('h3').html(dimensionObj.title + '<hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
 		$(chartName).parent().addClass('pie-chart');
 		writeSampleData($(chartName).parent().parent(), sampleObj);
 
@@ -867,7 +805,7 @@ $(document).ready(function() {
 		    .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
 		    .attr("dy", ".35em")
 		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.ceil((d.value/total)*100)+'%'; })
+		  	.attr('title', function(d) { return Math.round((d.value/total)*100)+'%'; })
 		    .text(function(d) { return d.data.value; });
 
 		//initialize tooltips
@@ -1000,7 +938,8 @@ $(document).ready(function() {
 	}
 
 	function setChartTitle(chart, title){
-		chart.find('h3').html('By ' + title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of ' + util.getMetric() + '</span><hr>').addClass('title');
+		var metric = (chart.find('.chart').hasClass('user-chart')) ? 'sessions' : util.getMetric();
+		chart.find('h3').html('By ' + title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of ' + metric + '</span><hr>').addClass('title');
 		$('body').attr('data-metric', util.getMetric());
 	}
 
@@ -1211,7 +1150,104 @@ $(document).ready(function() {
 
 });
 
+// $(document).ready(function() {
 
+//     //init dimension filters
+//     $(".dropdown").select2({
+//         minimumResultsForSearch: 10
+//     });
+
+//     var contentTypes = [{ id: 0, text: 'Reports' }, { id: 1, text: 'Jobs' }, { id: 2, text: 'Training' }];
+//     $(".contenttype-dropdown").select2({
+//         data: contentTypes,
+//         minimumResultsForSearch: 10
+//     });
+
+// 	var countryData = "http://api.rwlabs.org/v1/countries?sort[]=name:asc&limit=249";
+// 	$.getJSON(countryData, function(obj) {
+//         $.each(obj.data, function(key, val) {
+//             $(".country-dropdown").append("<option>" + val.fields.name + "</option>");
+//         });
+//     });
+
+//     var themesData = "http://api.reliefweb.int/v1/reports?facets[0][field]=theme&facets[0][limit]=20&limit=0";
+//     $.getJSON(themesData, function(obj) {
+//         $.each(obj.embedded.facets.theme.data, function(key, val) {
+//             $(".themes-dropdown").append("<option>" + val.value + "</option>");
+//         });
+//     });
+
+//     var sourceTypeData = "http://api.rwlabs.org/v1/sources?facets[0][field]=type&facets[0][limit]=20&limit=0";
+//     $.getJSON(sourceTypeData, function(obj) {
+//         $.each(obj.embedded.facets.type.data, function(key, val) {
+//             $(".sourcetype-dropdown").append("<option>" + val.value + "</option>");
+//         });
+//     });
+
+//     var sourcesData = "http://api.rwlabs.org/v1/sources/?sort[]=name:asc&limit=1000";
+// 	$.getJSON(sourcesData, function(obj) {
+//         $.each(obj.data, function(key, val) {
+//             $(".sources-dropdown").append("<option>" + val.fields.name + "</option>");
+//         });
+//     });
+
+
+
+
+//     // time filter functions
+//     var d = new Date();
+//     var currYear = d.getFullYear();
+//     var currMth = d.getMonth();
+//     var startYear = 1996;
+//     var timespan = [];
+
+//     //create month array formatted for select2
+//     var month = [{id:1, text:"Jan"},{id:2, text:"Feb"},{id:3, text:"Mar"},{id:4, text:"Apr"},{id:5, text:"May"},{id:6, text:"Jun"},{id:7, text:"Jul"},{id:8, text:"Aug"},{id:9, text:"Sep"},{id:10, text:"Oct"},{id:11, text:"Nov"},{id:12, text:"Dec"}];
+
+//     //create year array formatted for select2
+//     var year = [];
+//     for (var i=startYear; i<=currYear; i++){
+//         year.push({id:i, text: i});
+//     }
+
+//     //create timespan array for time slider
+//     var mthMax = month.length;
+//     for (var y=0; y<year.length; y++){
+//         if (year[y].text==currYear){
+//             mthMax = currMth;
+//         }
+//         for (var m=0; m<mthMax; m++){
+//             var time = month[m].text + " " + year[y].text;
+//             timespan.push(time);
+//         }
+//     }
+
+//     //init time slider
+//     $("#mytimeFilter").ionRangeSlider({
+//         type: "single",
+//         from: timespan.length, 
+//         grid: true,
+//         grid_num: 2,
+//         prettify_enabled: false,
+//         force_edges: false,
+//         values: timespan
+//     });
+
+//     //create time filters for mobile
+//     $(".month-dropdown").select2({
+//         data: month,
+//         minimumResultsForSearch: Infinity
+//     });
+//     //default to current month
+//     $(".month-dropdown").select2().val(currMth).trigger("change");
+//     $(".month-dropdown").select2({minimumResultsForSearch: Infinity});
+
+//     $(".year-dropdown").select2({
+//         data: year.reverse(),
+//         minimumResultsForSearch: Infinity
+//     });
+
+// });
 (function() {
   var gaapi = window.gaapi = {
     CLIENT_ID: '1069090331718-haaj3qc7l8co91c5ap1ac6d8frluo705.apps.googleusercontent.com',
@@ -1301,10 +1337,6 @@ $(document).ready(function() {
         if (filterParams.dimensions.length>0){
           $.each(filterParams.dimensions, function(key, val) {
 
-            var v = val.value;
-            v = v.split(' (');
-            v = v[0];
-
             if (val.gadimension!=""){
               var value = (val.gadimension=="dimension7") ? val.value.split(' (')[0] : val.value;
               var operator = (val.gadimension=="dimension13") ? "BEGINS_WITH" : "PARTIAL";
@@ -1327,31 +1359,31 @@ $(document).ready(function() {
         gapi.client.load(gaapi.DISCOVERY
         ).then(function() {
             //Call the Analytics Reporting API V4 batchGet method.
-            // var query = {
-            //   "quotaUser": gaapi.QUOTA_ID,
-            //   "reportRequests":[
-            //   {
-            //     "viewId":gaapi.VIEW_ID,
-            //     "dateRanges":[
-            //       {
-            //         "startDate":gaapi.formatDate(filterParams.visited_startDate),
-            //         "endDate":gaapi.formatDate(filterParams.visited_endDate)
-            //       }],
-            //     "metrics":[
-            //       {
-            //         "expression":"ga:"+gaapi.EXPRESSION
-            //       }],
-            //     "orderBys":[
-            //       {
-            //         "fieldName": "ga:"+gaapi.EXPRESSION, "sortOrder": "DESCENDING"
-            //       }],
-            //     "pageSize":pageSize,
-            //     "samplingLevel": "LARGE",
-            //     "dimensions": dimensionArray,
-            //     "dimensionFilterClauses": filter
-            //   }]
-            // };
-            // if (dimensionObj.id=="dimension6") console.table(JSON.stringify(query));
+            var query = {
+              "quotaUser": gaapi.QUOTA_ID,
+              "reportRequests":[
+              {
+                "viewId":gaapi.VIEW_ID,
+                "dateRanges":[
+                  {
+                    "startDate":gaapi.formatDate(filterParams.visited_startDate),
+                    "endDate":gaapi.formatDate(filterParams.visited_endDate)
+                  }],
+                "metrics":[
+                  {
+                    "expression":"ga:"+gaapi.EXPRESSION
+                  }],
+                "orderBys":[
+                  {
+                    "fieldName": "ga:"+gaapi.EXPRESSION, "sortOrder": "DESCENDING"
+                  }],
+                "pageSize":pageSize,
+                "samplingLevel": "LARGE",
+                "dimensions": dimensionArray,
+                "dimensionFilterClauses": filter
+              }]
+            };
+            if (dimensionObj.id=="dimension6") console.table(JSON.stringify(query));
 
             gapi.client.analyticsreporting.reports.batchGet( {
               "quotaUser": gaapi.QUOTA_ID,
@@ -4908,9 +4940,9 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 				}]
 			};
 
-			//if (dimensionObj.name=="disaster") console.log(JSON.stringify(rwQuery));
+			//if (dimensionObj.name=="country") console.log(JSON.stringify(rwQuery));
 
-			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
+			var url = "http://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function(){
 				if (xhr.readyState === 4) {
