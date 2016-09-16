@@ -69,7 +69,7 @@ $(document).ready(initUtil);
 	    currScroll: 0,
 
 	    init: function(){
-	    	filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
+	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
 
 	    	//init filter vars
 	        var d = util.getStartEndDate();
@@ -228,7 +228,7 @@ $(document).ready(initUtil);
 
 	        //jobs filters
 	        filters.contentType = 'jobs';
-	        filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
 	        var typeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(typeData, function(obj) {
 	            $.each(obj.embedded.facets.type.data, function(key, val) {
@@ -252,7 +252,7 @@ $(document).ready(initUtil);
 
 	        //training filters
 	        filters.contentType = 'training';
-	        filters.rwURL = 'http://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
 	        var costData = filters.rwURL + '&facets[0][field]=cost&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(costData, function(obj) {
 	            $.each(obj.embedded.facets.cost.data, function(key, val) {
@@ -4942,7 +4942,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 
 			//if (dimensionObj.name=="country") console.log(JSON.stringify(rwQuery));
 
-			var url = "http://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
+			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function(){
 				if (xhr.readyState === 4) {
