@@ -1,37 +1,273 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>Rw-trends-v3 by reliefweb</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">Rw-trends-v3</h1>
-      <h2 class="project-tagline">ReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API)</h2>
-      <a href="https://github.com/reliefweb/rw-trends-v3" class="btn">View on GitHub</a>
-      <a href="https://github.com/reliefweb/rw-trends-v3/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/reliefweb/rw-trends-v3/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+<!doctype html>
+<html>
+	<head>
+		<title>ReliefWeb Trends Dashboard Prototype</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+		<link rel="stylesheet" href="./styles/bootstrap.min.css">
+		<link rel="stylesheet" href="./styles/select2.min.css">
+		<link rel="stylesheet" href="./styles/app.css">
+		<link rel="stylesheet" href="./styles/rwlabsstyle.css">
+	</head>
 
-    <section class="main-content">
-      <h1>
-<a id="rw-trends-v3" class="anchor" href="#rw-trends-v3" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>rw-trends-v3</h1>
+	<body>
+		<!-- Google Tag Manager -->
+		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-TCM2PX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-TCM2PX');</script>
+		<!-- End Google Tag Manager -->
 
-<p>ReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API)</p>
+		<header>
+			<nav class="navbar navbar-default" style="margin-bottom:2em;">
+			  <div class="container">
+			    <div class="row">
+			    <div class="navbar-header col-md-12">
+			      <ul class="nav navbar-nav nav-tabs col-xs-12 col-sm-8 col-md-5 navbar-left" id="rw-nav-global-sites">
+			        <li class="rw-nav-first-left"><a href="http://reliefweb.int" id="rw-nav-rwhome"></a></li>
+			        <li class="active"><a href="http://labs.reliefweb.int/index.html" id="rw-nav-rwlabs">Labs</a></li>
+			        <li><a href="http://reliefweb.int/blog" id="rw-nav-rwblog">Blog</a></li>
+			      </ul>
+			      <ul class="nav nav-pills col-xs-12 col-sm-4 col-md-5 navbar-right" id="rw-nav-global-utilities">
+			        <li><a href="http://reliefweb.int/about">About Us</a></li>
+			        <li><a href="mailto:labs@reliefweb.int">Get in touch</a></li>
+			        <li>
+			          <ul class="social-icons">
+			            <li class="social-icon"><a href="http://twitter.com/reliefweb"><img src="img/icon-twitter.png" alt="Twitter"></a></li>
+			            <li class="social-icon"><a href="http://www.facebook.com/reliefweb"><img src="img/icon-facebook.png" alt="Facebook"></a></li>
+			            <li class="social-icon"><a href="http://www.youtube.com/channel/UC4RQutFVU_1OSNtOzGyBfGw"><img src="img/icon-youtube.png" alt="YouTube"></a></li>
+			            <li class="social-icon"><a href="https://plus.google.com/u/0/101350840970995581001"><img src="img/icon-google.png" alt="Google plus"></a></li>
+			            <li class="social-icon"><a href="/rss"><img src="img/icon-rss.png" alt="RSS"></a></li>
+			          </ul>
+			        </li>
+			      </ul>
+			    </div>
+			    </div>
+			  </div>
+			</nav>
+		</header>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/reliefweb/rw-trends-v3">Rw-trends-v3</a> is maintained by <a href="https://github.com/reliefweb">reliefweb</a>.</span>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-3">
+					<div class="filter-mobile mobile-only"><h4>Filter Options</h4><div class="filter-toggle mobile-only"><a href="#">open</a></div></div>
+<div class="filters">
+	<h4>Filter Options</h4><a href="#" class="clear-filters-btn">clear all</a><div class="filter-toggle mobile-only">|<a href="#" class="close-toggle">close</a></div>
+	<div class="loading">Loading...</div>
+	<div class="filter-menu">
+		<ul>
+			<li class="metric-selector">
+				<input type="radio" id="contentMetric" name="metric" value="content published" checked> <label for="contentMetric">Content Published</label><br>
+				<input type="radio" id="sessionsMetric" name="metric" value="sessions"> <label for="sessionsMetric">Sessions</label>
+			</li>
+			<li>
+				<label for="contentTypeFilter" class="active">Content Type</label>
+				<select id="contentTypeFilter" data-dimension="" data-gadimension="dimension1" class="dropdown content_type-dropdown">
+				</select>
+			</li>
+			<li class="all-country">
+				<label for="countryFilter">Country</label>
+				<select id="countryFilter" data-dimension="country" data-gadimension="dimension6" class="dropdown country-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="themeFilter">Theme</label>
+				<select id="themeFilter" data-dimension="theme" data-gadimension="dimension8" class="dropdown themes-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li class="sources reports-sources">
+				<label for="reportsSourcesFilter">Organization</label>
+				<select id="reportsSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li class="sources jobs-sources">
+				<label for="jobsSourcesFilter">Organization</label>
+				<select id="jobsSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li class="sources training-sources">
+				<label for="trainingSourcesFilter">Organization</label>
+				<select id="trainingSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="dateCreatedFilter">Date Created</label>
+				<select id="dateCreatedFilter" data-mode="created" data-dimension="" data-gadimension="dimension13" class="dropdown time-filter created-date-dropdown"><option>All</option></select>
+			</li>
+			<li class="dateRangeFilter">
+				<label for="dateVisitedFilter">Date Visited</label>
+				<select id="dateVisitedFilter" data-mode="visited" data-dimension="" data-gadimension="" class="dropdown time-filter visited-date-dropdown"></select>
+			</li>
+		</ul>
+		
+		<h4 class="sub-filters-header">Report Filter Options</h4>
+		<ul class="sub-menu reports-filters">
+			<li>
+				<label for="formatFilter">Format</label>
+				<select id="formatFilter" data-dimension="format" data-gadimension="dimension2" class="dropdown format-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="disasterFilter">Disaster</label>
+				<select id="disasterFilter" data-dimension="disaster" data-gadimension="dimension9" class="dropdown disaster-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="disasterTypeFilter">Disaster Type</label>
+				<select id="disasterTypeFilter" data-dimension="disaster_type.name" data-gadimension="dimension10" class="dropdown disasterType-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="vulnerableGroupsFilter">Vulnerable Groups</label>
+				<select id="vulnerableGroupsFilter" data-dimension="vulnerable_groups" data-gadimension="dimension11" class="all-dropdown dropdown vulnerableGroups-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<!-- <li><button type="button" class="apply-filters-btn btn btn-default">Apply Filters</button></li> -->
+		</ul>
+		<ul class="sub-menu jobs-filters">
+			<li>
+				<label for="typeFilter">Job Type</label>
+				<select id="typeFilter" data-dimension="type" data-gadimension="dimension15" class="dropdown jobtype-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="experienceFilter">Job Experience</label>
+				<select id="experienceFilter" data-dimension="experience" data-gadimension="dimension16" class="dropdown experience-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="careerCategoryFilter">Career Category</label>
+				<select id="careerCategoryFilter" data-dimension="career_categories" data-gadimension="dimension17" class="dropdown careerCategory-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+		</ul>
+		<ul class="sub-menu training-filters">
+			<li>
+				<label for="costFilter">Training Cost</label>
+				<select id="costFilter" data-dimension="cost" data-gadimension="dimension14" class="dropdown cost-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="trainingCareerCategoryFilter">Career Category</label>
+				<select id="trainingCareerCategoryFilter" data-dimension="career_categories" data-gadimension="dimension17" class="dropdown trainingCareerCategory-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="trainingTypeFilter">Training Type</label>
+				<select id="trainingTypeFilter" data-dimension="type" data-gadimension="dimension18" class="dropdown trainingType-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+			<li>
+				<label for="trainingFormatFilter">Training Format</label>
+				<select id="trainingFormatFilter" data-dimension="format" data-gadimension="dimension19" class="dropdown trainingFormat-dropdown">
+					<option>All</option>
+				</select>
+			</li>
+		</ul>
+	</div>
+</div>
+				</div>
+				<div class="col-md-9 no-pad">
+					<div class="intro">
+						<ul class="horiz-box">
+							<li><img src="img/logo-reliefweb.png" /></li>
+							<li><h1>Content & Users Analytics</h1></li>
+						</ul>
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce consequat diam fringilla sodales dignissim. Quisque sed varius diam. Phasellus ut dolor facilisis massa fringilla laoreet vel eu erat. Praesent porttitor at quam non feugiat.</p>
+					</div>
+					<div class="row generic-container"></div>
+					<div class="row contenttype-container"></div>
+					<div class="row user-container"></div>
+				</div>
+			</div>
+		</div>
 
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
+		<footer>
+			<div class="footer container">
+			  <a href="#" class="button-link pull-right scroll-link back-to-top" data-id="rw-nav-global-sites">Back to top.</a>
+			  <div class="row">
+			    <div class="container">
+			      <div class="col-md-4 col-sm-6 col-xs-12">
+			        <a href="http://www.reliefweb.int" class="logo active"><h3 class="logo-footer text-hide">ReliefWeb</h3></a>
+			        <p class="footer-subtitle">Informing humanitarians worldwide.</p>
+			        <p>A service provided by
+			        <a href="http://www.unocha.org"><span class="ocha-logo-footer text-hide">OCHA</span></a></p>
+			        <p>ReliefWeb has been the leading online source for reliable and timely humanitarian information on global crises and disasters since 1996.<br><a href="http://reliefweb.int/about">Learn more about ReliefWeb</a></p>
+			      </div>
 
-    </section>
+			      <div class="col-md-4 col-sm-6 col-xs-12 pull-right">
+			        <div class="footer-heading">Related Sites</div>
+			        <div class="row">
+			          <div class="col-md-4 col-sm-4 col-xs-4">
+			            <a href="http://www.humanitarianresponse.info/" title="Humanitarian Response" target="_blank"><div class="related-site text-hide logo-humanitarianresponse">Humanitarian Response</div></a>
+			            <a href="http://www.gdacs.org" title="Global Disaster Alert and Coordination System" target="_blank"><div class="related-site text-hide logo-gdacs">Global Disaster Alert and Coordination System</div></a>
+			            <a href="http://www.inform-index.org" title="Inform Index" target="_blank"><div class="related-site text-hide logo-inform">Inform Index</div></a>
+			            <a href="http://www.humanitarianinfo.org/iasc/" title="Inter-Agency Standing Committee" target="_blank"><div class="related-site text-hide logo-iasc">Inter-Agency Standing Committee</div></a>
+			          </div>
 
-  
-  </body>
+			          <div class="col-md-4 col-sm-4 col-xs-4">
+			            <a href="https://humdata.org/" title="Humanitarian Data Exchange" target="_blank"><div class="related-site text-hide logo-hdx">Humanitarian Data Exchange</div></a>
+			            <a href="http://www.unocha.org/cerf/" title="Central Emergency Response Fund" target="_blank"><div class="related-site text-hide logo-cerf">Central Emergency Response Fund</div></a>
+			            <a href="http://vosocc.unocha.org" title="Virtual OSOCC - real-time disaster coordination" target="_blank"><div class="related-site text-hide logo-vosocc">Virtual OSOCC - real-time disaster coordination</div></a>
+			            <a href="http://www.preventionweb.net/" title="PreventionWeb" target="_blank"><div class="related-site text-hide logo-pw">PreventionWeb</div></a>
+			          </div>
+
+			          <div class="col-md-4 col-sm-4 col-xs-4">
+			            <a href="http://fts.unocha.org" title="Financial Tracking Service" target="_blank"><div class="related-site text-hide logo-fts">Financial Tracking Service</div></a>
+			            <a href="http://www.redhum.org" title="Red de Información Humanitaria para América Latina y el Caribe" target="_blank"><div class="related-site text-hide logo-redhum">Red de Información Humanitaria para América Latina y el Caribe</div></a>
+			            <a href="http://www.worldhumanitariansummit.org" title="World Humanitarian Summit" target="_blank"><div class="related-site text-hide logo-whs">World Humanitarian Summit</div></a>
+			            <a href="http://www.insarag.org" title="International Search and Rescue Advisory Group" target="_blank"><div class="related-site text-hide logo-insarag">International Search and Rescue Advisory Group</div></a>
+			          </div>
+			        </div>
+			      </div>
+			    </div>
+			    <div class="row">
+			      <div class="container">
+			        <div class="col-md-12">
+			          <div class="row-fluid rw-copyright">© 2016 ReliefWeb</div>
+			        </div>
+			      </div>
+			    </div>
+			  </div>
+			</div>
+		</footer>
+
+		
+		<script src="./vendors/jquery.min.js"></script>
+		<script src="./vendors/select2.min.js"></script>
+		<script src="./vendors/tether.min.js"></script>
+		<script src="./vendors/bootstrap.min.js"></script>
+		<script src="./vendors/d3.min.js"></script>
+		<script src="./vendors/URI.min.js"></script>
+		<script src="./vendors/jsrsasign-latest-all-min.js"></script>
+  		<script src='./js/app.js'></script>
+		<script>
+			(function(w,d,s,g,js,fs){
+			  g=w.gapi||(w.gapi={});g.analytics={q:[],ready:function(f){this.q.push(f);}};
+			  js=d.createElement(s);fs=d.getElementsByTagName(s)[0];
+			  js.src='https://apis.google.com/js/platform.js';
+			  fs.parentNode.insertBefore(js,fs);js.onload=function(){g.load('analytics');};
+			}(window,document,'script'));
+
+			gapi.analytics.ready(function() {
+				gaapi.authorize();
+			});
+		</script>
+	</body>
 </html>
