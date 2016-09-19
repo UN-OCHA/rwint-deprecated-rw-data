@@ -41,6 +41,10 @@ var Util = function() {
 	    	trunc.remove();
 	    	orig.remove();
 	    	return val;
+		},
+		roundNearest: function(num){
+			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
+			return Math.ceil(num/p)*p;
 		}
 	};
 	return self;
@@ -67,6 +71,7 @@ $(document).ready(initUtil);
 	    contentType: 'reports',
 	    rwURL: '',
 	    currScroll: 0,
+	    timelineStartDate: '2016-04-01T00:00:00+0000',
 
 	    init: function(){
 	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
@@ -78,7 +83,6 @@ $(document).ready(initUtil);
 
 	        //init filters
 	        filters.initSelectFilters();
-	        //filters.initTimeFilters();
 
 	        //init clear filters button
 	        $('.clear-filters-btn').on('click', function(){
@@ -361,7 +365,6 @@ $(document).ready(initUtil);
 
             //get date range input values
             if ($(target).hasClass('input-daterange') && $(target).is(':visible')){
-        		//filters.getTimeInterval({'startDate': $(target).find('.start-date').val(), 'endDate': $(target).find('.end-date').val(), 'mode': $(target).attr('data-mode')});
         		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
             	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
         	}
@@ -521,8 +524,8 @@ $(document).ready(function() {
     var intervalDelay = 1000;
 
 
-	$(document).on( "gaReady", userDataInit );
-	createCharts('.user-container', userDimensions);
+	//$(document).on( "gaReady", userDataInit );
+	//createCharts('.user-container', userDimensions);
 	
 	function userDataInit(){
 		getUserCharts();
@@ -826,7 +829,8 @@ $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
 
-	var genericDimensions =  [{id:"dimension6", name:"country", title:"Country"},
+	var genericDimensions =  [{id:"", name:"date.original", title:"Number of content published"},
+							  {id:"dimension6", name:"country", title:"Country"},
                  	          {id:"dimension8", name:"theme", title:"Theme"},
                  	          {id:"dimension7", name:"source", title:"Organization"}
                 	         ];
@@ -851,15 +855,29 @@ $(document).ready(function() {
 
     filters.init();
     createCharts('.generic-container', genericDimensions);
-    getBarCharts();
+    createTimelineCharts();
+    getCharts();
 
-	function getBarCharts(){
-		$('.chart').parent().delay(500).queue(function(next){
+
+	function createCharts(container, dimensions){
+		$(container).empty();
+		$(container).append('<h2>' + currentContentType + ' Data</h2>');
+		for (var i=1; i<dimensions.length; i++){
+            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+        }
+	}
+
+	function createTimelineCharts(){
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of content published</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+	}
+
+	function getCharts(){
+		$('.chart').parent().delay(0).queue(function(next){
 		    $(this).removeClass('nodata').addClass('loading');
 		    next();
 		});
 
-		//set content type
+		//set content type and create content type specific charts
 		if (filters.filterParams.content_type!=currentContentType){
 			currentContentType = filters.filterParams.content_type;
 			dimensions = [];
@@ -889,27 +907,28 @@ $(document).ready(function() {
 		}
 	}
 
-	function createCharts(container, dimensions){
-		$(container).empty();
-		$(container).append('<h2>' + currentContentType + ' Data</h2>');
-		for (var i=0; i<dimensions.length; i++){
-            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
-        }
-	}
-
-	//define data events
+// +--------------------------------------------------------------+
+// |                                                              |
+// |                        DATA EVENTS                           |
+// |                                                              |
+// +--------------------------------------------------------------+
 	$(document).on( "dataReady", function(e, result, dimensionObj, total, sampleObj) {
 		//format dimension name
 		var dimension = util.formatName(dimensionObj.name);
 		var chart = $('.' + dimension);
 		chart.parent().stop(true).removeClass('nodata').removeClass('loading');
 
-		if (chart.children().length==0){
-	    	drawBarChart(result, dimensionObj, total, sampleObj);
+		if (dimensionObj.name=='date.original'){
+			drawTimelineChart(result);
 		}
-	    else{
-	    	updateBarChart(result, dimensionObj, total, sampleObj);
-	    }
+		else{
+			if (chart.children().length==0){
+		    	drawBarChart(result, dimensionObj, total, sampleObj);
+			}
+		    else{
+		    	updateBarChart(result, dimensionObj, total, sampleObj);
+		    }
+		}
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
 		clearChart(dimensionObj, 'There is no data for this time period.');
@@ -924,7 +943,7 @@ $(document).ready(function() {
     	else{
     		$('.dateRangeFilter').addClass('inactive');
     	}
-		getBarCharts();
+		getCharts();
 	});
 
 	function clearChart(obj, msg){
@@ -953,6 +972,12 @@ $(document).ready(function() {
 		}
 	}
 	
+
+// +--------------------------------------------------------------+
+// |                                                              |
+// |                      CHART FUNCTIONS                         |
+// |                                                              |
+// +--------------------------------------------------------------+
 	//define chart variables
 	var barHeight = 20,
 		barMargin = 25,
@@ -1124,6 +1149,94 @@ $(document).ready(function() {
 		//reset and initialize tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}	
+
+   	
+	function drawTimelineChart(data){
+		//parse dates
+		var parseDate = d3.time.format("%Y-%m-%d").parse;
+		for (var i=0;i<data.length;i++){
+			var d = (data[i].value).split('T')[0];
+			data[i].value = parseDate(d);
+		}
+
+		var chartName = '.timeline-content';
+		var chartContainer = $(chartName).parent().parent();
+		$(chartContainer).find('h3 span').html('Number of reports published');
+		$(chartName).parent().removeClass('loading');
+
+		var margin = {left: 40, top: 10, right: 40, bottom: 23};
+		var width = $('.chart-container').width() - margin.left - margin.right;
+		var height = $(chartName).parent().height() - margin.top - margin.bottom;
+
+		if ($(chartName).children().length>0){
+			d3.select(chartName).selectAll("svg > *").remove();
+			//$('[data-toggle="tooltip"]').tooltip('destroy');
+		}
+
+		var x = d3.time.scale()
+			.domain(d3.extent(data, function(d) { return d.value; }))
+			.range([0, width]);
+
+		var max = d3.max(data, function(d) { return d.count; });
+		var y = d3.scale.linear()
+		    .domain([0, util.roundNearest(max)])
+		    .range([height, 0]);
+
+		var xAxis = d3.svg.axis().scale(x)
+		    .orient("bottom")
+		    .innerTickSize(-height)
+		    .outerTickSize(0)
+    		.tickPadding(10)
+    		.ticks(5)
+		    .tickFormat(d3.time.format("%m/%d/%y"));
+
+		var yAxis = d3.svg.axis().scale(y)
+		    .orient("left")
+		    .innerTickSize(-width)
+		    .outerTickSize(-width)
+		    .tickPadding(10)
+		    .ticks(5);
+
+    	var area = d3.svg.area()
+	    	.x(function(d) { return x(d.value); })
+	    	.y0(height)
+	    	.y1(function(d) { return y(d.count); });
+
+	    var line = d3.svg.line()
+		    .x(function(d) { return x(d.value); })
+		    .y(function(d) { return y(d.count); });
+
+		var chart = d3.select(chartName)
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom).append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		chart.append("g")
+		    .attr("class", "x axis")
+		    .attr("transform", "translate(0," + height + ")")
+		    .call(xAxis)
+
+		chart.append("g")
+		    .attr("class", "y axis")
+		    .call(yAxis)
+
+	    chart.append("path")
+			.data([data])
+	        .attr("class", "area")
+	        .attr("d", area);
+
+	    chart.append("path")      
+	        .attr("class", "line")
+	        .attr("d", line(data));
+
+	    chart.append("path")
+	        .data([data])
+	        .attr("class", "line")
+	        .attr("d", line);
+	}
+
+
+
 
 	// $(window).resize(resizeCharts);
  //    function resizeCharts(){
@@ -4913,6 +5026,8 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
 			var filterObj = {};
+			var interval = (dimension=="date.original") ? "month" : "";
+
 			//set dimension filters
 			if (filterParams.dimensions){
 	            $.each(filterParams.dimensions, function(key, val) {
@@ -4923,25 +5038,35 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 	            });
 			}
 			//set date created filter
-			if (filterParams.created_startDate && filterParams.created_endDate){
-				conditionArr.push({"field": "date.created", "value": {"from":filterParams.created_startDate, "to":filterParams.created_endDate} });
+			if (dimension=="date.original"){
+				var today = new Date();
+				var toDate = util.formatDate(today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + today.getDate());
+				var fromDate = filters.timelineStartDate;
+				conditionArr.push({"field": "date.created", "value": {"from": fromDate, "to": toDate} });
+			}
+			else{
+				if (filterParams.created_startDate && filterParams.created_endDate){
+					conditionArr.push({"field": "date.created", "value": {"from": filterParams.created_startDate, "to": filterParams.created_endDate} });
+				}
 			}
 			//set filter conditions
 			if (conditionArr.length>0){
 				filterObj = {"operator": "AND", "conditions": conditionArr};
 			}
+
 			//build RW query
-			var rwQuery = {
-				"facets": [
-				{
-					"limit": 300,
-				    "field": dimension,
-				    "filter": filterObj
-				}]
-			};
+			var facets = [{ "field": dimension, "filter": filterObj }];
+			if (dimension=="date.original"){
+				facets[0].interval = interval;
+			}
+			else{
+				facets[0].limit = 700000;
+			}
+			var rwQuery = { "facets": facets };
 
-			//if (dimensionObj.name=="country") console.log(JSON.stringify(rwQuery));
+			//if (dimension=="date.original") console.log(JSON.stringify(rwQuery));
 
+			//send RW query
 			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function(){
@@ -4962,7 +5087,6 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 		},
 
 		parseData: function(d, dimensionObj){
-			//if (dimensionObj.name=="disaster") console.table(d);
 			var result = [];
 			var total = 0;
 			for (var i=0; i<d.length; i++) {

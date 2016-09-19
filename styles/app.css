@@ -14,7 +14,7 @@ hr { border-top: 1px solid #d4d4d4; margin: 10px 0; }
 
 footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; font-size: 14px; line-height: 1.42857143; padding-top: 40px; }
 
-.generic-container, .contenttype-container, .user-container { padding: 0 15px 15px; }
+.timeline-container, .generic-container, .contenttype-container, .user-container { padding: 0 15px 15px; }
 
 .intro { padding-bottom: 20px; text-align: center; }
 
@@ -81,6 +81,8 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .chart.user_gender, .chart-container .chart-inner .chart.user_device, .chart-container .chart-inner .user-chart.user_gender, .chart-container .chart-inner .user-chart.user_device { background: none; min-height: 248px; padding-top: 0; margin-top: -10px; }
 
+.chart-container .chart-inner .chart.timeline-chart, .chart-container .chart-inner .user-chart.timeline-chart { background: none; padding: 0; }
+
 .chart-container .chart-inner.loading .chart, .chart-container .chart-inner.loading .user-chart { opacity: 0.3; }
 
 .chart-container .chart-inner.loading .loader { display: block; }
@@ -96,6 +98,16 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 .chart-container .chart-inner .loader { display: none; left: 50%; position: absolute; top: 20%; transform: translate(-50%, -50%); }
 
 .chart-container .chart-inner.loading + .sampleData { opacity: 0.3; }
+
+.axis path, .axis line { fill: none; stroke: #d4d4d4; }
+
+.line { fill: none; stroke: #0988BB; stroke-width: 2px; }
+
+.tick text { font-size: 12px; }
+
+.tick line { opacity: 1; }
+
+.area { fill: rgba(9, 136, 187, 0.5); stroke-width: 0; }
 
 .flex-grid { align-content: stretch; display: flex; flex-flow: column wrap; height: 950px; max-width: 1260px; }
 
