@@ -524,8 +524,8 @@ $(document).ready(function() {
     var intervalDelay = 1000;
 
 
-	//$(document).on( "gaReady", userDataInit );
-	//createCharts('.user-container', userDimensions);
+	$(document).on( "gaReady", userDataInit );
+	createCharts('.user-container', userDimensions);
 	
 	function userDataInit(){
 		getUserCharts();
