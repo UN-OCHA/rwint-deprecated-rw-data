@@ -44,7 +44,11 @@ var Util = function() {
 		},
 		roundNearest: function(num){
 			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
-			return Math.ceil(num/p)*p;
+			var nearest = Math.ceil(num/p)*p;
+			if (Math.abs(nearest-num) < Math.abs(num-(nearest-p))){
+				nearest = nearest + p;
+			}
+			return nearest;
 		}
 	};
 	return self;
@@ -829,7 +833,7 @@ $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
 
-	var genericDimensions =  [{id:"", name:"date.original", title:"Number of content published"},
+	var genericDimensions =  [{id:"yearMonth", name:"date.created", title:"Number of content published"},
 							  {id:"dimension6", name:"country", title:"Country"},
                  	          {id:"dimension8", name:"theme", title:"Theme"},
                  	          {id:"dimension7", name:"source", title:"Organization"}
@@ -868,7 +872,10 @@ $(document).ready(function() {
 	}
 
 	function createTimelineCharts(){
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of content published</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of ' + filters.content_type + ' published</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+
 	}
 
 	function getCharts(){
@@ -918,8 +925,8 @@ $(document).ready(function() {
 		var chart = $('.' + dimension);
 		chart.parent().stop(true).removeClass('nodata').removeClass('loading');
 
-		if (dimensionObj.name=='date.original'){
-			drawTimelineChart(result);
+		if (dimensionObj.name=='date.created'){
+			drawTimelineChart(result, 'content');
 		}
 		else{
 			if (chart.children().length==0){
@@ -929,6 +936,17 @@ $(document).ready(function() {
 		    	updateBarChart(result, dimensionObj, total, sampleObj);
 		    }
 		}
+	});
+	$(document).on( "gaReady", function(){
+		//get timeline data
+		gaapi.getData(genericDimensions[0], 'timelineDataReady');
+	});
+	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
+		// for (var i=0;i<result.length;i++){
+		// 	var d = (result[i].value).substr(0, 4) + '-' + (result[i].value).substr(4, 2) + '-01';
+		// 	result[i].value = d;
+		// }
+		drawTimelineChart(result, 'sessions');
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
 		clearChart(dimensionObj, 'There is no data for this time period.');
@@ -1151,17 +1169,25 @@ $(document).ready(function() {
 	}	
 
    	
-	function drawTimelineChart(data){
+	function drawTimelineChart(data ,type){
 		//parse dates
-		var parseDate = d3.time.format("%Y-%m-%d").parse;
+		var parseDate = d3.time.format("%Y-%m-%d").parse,
+    		formatValue = d3.format(","),
+    		bisectDate = d3.bisector(function(d) { return d.value; }).left;
+
 		for (var i=0;i<data.length;i++){
-			var d = (data[i].value).split('T')[0];
+			if (type=='sessions'){
+				var d = (data[i].value).substr(0, 4) + '-' + (data[i].value).substr(4, 2) + '-01';
+			}
+			else{
+				var d = (data[i].value).split('T')[0];
+			}
 			data[i].value = parseDate(d);
 		}
 
-		var chartName = '.timeline-content';
+		var chartName = '.timeline-'+type;
 		var chartContainer = $(chartName).parent().parent();
-		$(chartContainer).find('h3 span').html('Number of reports published');
+		if (type=='content') $(chartContainer).find('h3 span').html('Number of ' + filters.filterParams.content_type + ' published');
 		$(chartName).parent().removeClass('loading');
 
 		var margin = {left: 40, top: 10, right: 40, bottom: 23};
@@ -1195,7 +1221,8 @@ $(document).ready(function() {
 		    .innerTickSize(-width)
 		    .outerTickSize(-width)
 		    .tickPadding(10)
-		    .ticks(5);
+		    .ticks(5)
+		    .tickFormat(d3.format("s"));
 
     	var area = d3.svg.area()
 	    	.x(function(d) { return x(d.value); })
@@ -1233,6 +1260,38 @@ $(document).ready(function() {
 	        .data([data])
 	        .attr("class", "line")
 	        .attr("d", line);
+
+		var focus = chart.append("g")
+			.attr("class", "focus")
+			.style("display", "none");
+
+		focus.append("circle")
+			.attr("r", 4.5);
+
+		focus.append("text")
+			.attr("text-anchor", "middle")
+			.attr("dy", "-12");
+
+		chart.append("rect")
+			.attr("class", "overlay")
+			.attr("width", width)
+			.attr("height", height)
+			.on("mouseover", function() { focus.style("display", null); })
+			.on("mouseout", function() { focus.style("display", "none"); })
+			.on("mousemove", mousemove);
+
+		function mousemove() {
+			var x0 = x.invert(d3.mouse(this)[0]),
+			    i = bisectDate(data, x0, 1),
+			    d0 = data[i - 1],
+			    d1 = data[i];
+
+		    if (d0 && d1){
+			    var d = x0 - d0.value > d1.value - x0 ? d1 : d0;
+				focus.attr("transform", "translate(" + x(d.value) + "," + y(d.count) + ")");
+				focus.select("text").text(formatValue(d.count));
+			}
+		}
 	}
 
 
@@ -1406,7 +1465,7 @@ $(document).ready(function() {
           $(document).trigger('gaReady');
       });
 
-      // We define what will happen in case of error
+      //error listener
       XHR.addEventListener('error', function(event) {
           console.log('Oops! Something went wrong.');
       });
@@ -1415,24 +1474,6 @@ $(document).ready(function() {
       XHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       XHR.send(urlEncodedData);
     },
-
-
-    // authorize: function(event){ 
-    //   // Handles the authorization flow.
-    //   // `immediate` should be false when invoked from the button click.
-    //   var useImmediate = event ? false : true;
-    //   var authData = {
-    //     client_id: gaapi.CLIENT_ID,
-    //     scope: gaapi.SCOPES,
-    //     immediate: useImmediate
-    //   };
-
-    //   gaapi.QUOTA_ID = gaapi.randomString(7, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'); 
-
-    //   gapi.auth.authorize(authData, function(response) {
-    //     $(document).trigger('gaReady');
-    //   });
-    // },
 
 
     getData: function(dimensionObj, eventCallback, pageSize){
@@ -1468,35 +1509,41 @@ $(document).ready(function() {
                     }];
         }
 
+        //set up date range
+        var today = new Date();
+        var toDate = today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + today.getDate();
+        var startDate = (dimensionObj.id=='yearMonth') ? filters.timelineStartDate.split('T')[0] : gaapi.formatDate(filterParams.visited_startDate);
+        var endDate = (dimensionObj.id=='yearMonth') ? toDate : gaapi.formatDate(filterParams.visited_endDate);
+        
         // Load the API from the client discovery URL.
         gapi.client.load(gaapi.DISCOVERY
         ).then(function() {
             //Call the Analytics Reporting API V4 batchGet method.
-            var query = {
-              "quotaUser": gaapi.QUOTA_ID,
-              "reportRequests":[
-              {
-                "viewId":gaapi.VIEW_ID,
-                "dateRanges":[
-                  {
-                    "startDate":gaapi.formatDate(filterParams.visited_startDate),
-                    "endDate":gaapi.formatDate(filterParams.visited_endDate)
-                  }],
-                "metrics":[
-                  {
-                    "expression":"ga:"+gaapi.EXPRESSION
-                  }],
-                "orderBys":[
-                  {
-                    "fieldName": "ga:"+gaapi.EXPRESSION, "sortOrder": "DESCENDING"
-                  }],
-                "pageSize":pageSize,
-                "samplingLevel": "LARGE",
-                "dimensions": dimensionArray,
-                "dimensionFilterClauses": filter
-              }]
-            };
-            if (dimensionObj.id=="dimension6") console.table(JSON.stringify(query));
+            // var query = {
+            //   "quotaUser": gaapi.QUOTA_ID,
+            //   "reportRequests":[
+            //   {
+            //     "viewId":gaapi.VIEW_ID,
+            //     "dateRanges":[
+            //       {
+            //         "startDate":gaapi.formatDate(filterParams.visited_startDate),
+            //         "endDate":gaapi.formatDate(filterParams.visited_endDate)
+            //       }],
+            //     "metrics":[
+            //       {
+            //         "expression":"ga:"+gaapi.EXPRESSION
+            //       }],
+            //     "orderBys":[
+            //       {
+            //         "fieldName": "ga:"+gaapi.EXPRESSION, "sortOrder": "DESCENDING"
+            //       }],
+            //     "pageSize":pageSize,
+            //     "samplingLevel": "LARGE",
+            //     "dimensions": dimensionArray,
+            //     "dimensionFilterClauses": filter
+            //   }]
+            // };
+            // if (dimensionObj.id=="yearMonth") console.table(JSON.stringify(query));
 
             gapi.client.analyticsreporting.reports.batchGet( {
               "quotaUser": gaapi.QUOTA_ID,
@@ -1505,8 +1552,8 @@ $(document).ready(function() {
                 "viewId":gaapi.VIEW_ID,
                 "dateRanges":[
                   {
-                    "startDate":gaapi.formatDate(filterParams.visited_startDate),
-                    "endDate":gaapi.formatDate(filterParams.visited_endDate)
+                    "startDate":startDate,
+                    "endDate":endDate
                   }],
                 "metrics":[
                   {
@@ -1523,7 +1570,7 @@ $(document).ready(function() {
               }]
             } ).then(function(response) {
               var formattedJson = JSON.stringify(response.result, null, 2);
-              //if (dimensionObj.id=="language") console.log(formattedJson);
+              //if (dimensionObj.id=="yearMonth") console.log('json',formattedJson);
               gaapi.parseData(formattedJson, dimensionObj, eventCallback);
             })
             .then(null, function(err) {
@@ -1575,7 +1622,7 @@ $(document).ready(function() {
       });
 
       //sort array 
-      if (dimensionObj.id=="userAgeBracket"){
+      if (dimensionObj.id=="userAgeBracket" || dimensionObj.id=="yearMonth"){
         result.sort(gaapi.sortByValue);
       }
       else{
@@ -5026,7 +5073,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
 			var filterObj = {};
-			var interval = (dimension=="date.original") ? "month" : "";
+			var interval = (dimension=="date.created") ? "month" : "";
 
 			//set dimension filters
 			if (filterParams.dimensions){
@@ -5038,7 +5085,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 	            });
 			}
 			//set date created filter
-			if (dimension=="date.original"){
+			if (dimension=="date.created"){
 				var today = new Date();
 				var toDate = util.formatDate(today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + today.getDate());
 				var fromDate = filters.timelineStartDate;
@@ -5056,7 +5103,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 
 			//build RW query
 			var facets = [{ "field": dimension, "filter": filterObj }];
-			if (dimension=="date.original"){
+			if (dimension=="date.created"){
 				facets[0].interval = interval;
 			}
 			else{
@@ -5064,7 +5111,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			}
 			var rwQuery = { "facets": facets };
 
-			//if (dimension=="date.original") console.log(JSON.stringify(rwQuery));
+			//if (dimension=="date.created") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
 			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';

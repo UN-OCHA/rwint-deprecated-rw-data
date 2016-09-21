@@ -83,6 +83,26 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .chart.timeline-chart, .chart-container .chart-inner .user-chart.timeline-chart { background: none; padding: 0; }
 
+.chart-container .chart-inner .chart.timeline-chart .axis path, .chart-container .chart-inner .chart.timeline-chart .axis line, .chart-container .chart-inner .user-chart.timeline-chart .axis path, .chart-container .chart-inner .user-chart.timeline-chart .axis line { fill: none; stroke: #d4d4d4; }
+
+.chart-container .chart-inner .chart.timeline-chart .line, .chart-container .chart-inner .user-chart.timeline-chart .line { fill: none; stroke: #0988BB; stroke-width: 2px; }
+
+.chart-container .chart-inner .chart.timeline-chart .tick text, .chart-container .chart-inner .user-chart.timeline-chart .tick text { font-size: 12px; }
+
+.chart-container .chart-inner .chart.timeline-chart .tick line, .chart-container .chart-inner .user-chart.timeline-chart .tick line { opacity: 1; }
+
+.chart-container .chart-inner .chart.timeline-chart .area, .chart-container .chart-inner .user-chart.timeline-chart .area { fill: rgba(9, 136, 187, 0.5); stroke-width: 0; }
+
+.chart-container .chart-inner .chart.timeline-chart rect.overlay, .chart-container .chart-inner .user-chart.timeline-chart rect.overlay { fill: none; pointer-events: all; }
+
+.chart-container .chart-inner .chart.timeline-chart .focus circle, .chart-container .chart-inner .user-chart.timeline-chart .focus circle { fill: #0988BB; }
+
+.chart-container .chart-inner .chart.timeline-chart.timeline-sessions .line, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .line { stroke: #B490E3; }
+
+.chart-container .chart-inner .chart.timeline-chart.timeline-sessions .area, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .area { fill: rgba(180, 144, 227, 0.5); }
+
+.chart-container .chart-inner .chart.timeline-chart.timeline-sessions .focus circle, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .focus circle { fill: #B490E3; }
+
 .chart-container .chart-inner.loading .chart, .chart-container .chart-inner.loading .user-chart { opacity: 0.3; }
 
 .chart-container .chart-inner.loading .loader { display: block; }
@@ -98,16 +118,6 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 .chart-container .chart-inner .loader { display: none; left: 50%; position: absolute; top: 20%; transform: translate(-50%, -50%); }
 
 .chart-container .chart-inner.loading + .sampleData { opacity: 0.3; }
-
-.axis path, .axis line { fill: none; stroke: #d4d4d4; }
-
-.line { fill: none; stroke: #0988BB; stroke-width: 2px; }
-
-.tick text { font-size: 12px; }
-
-.tick line { opacity: 1; }
-
-.area { fill: rgba(9, 136, 187, 0.5); stroke-width: 0; }
 
 .flex-grid { align-content: stretch; display: flex; flex-flow: column wrap; height: 950px; max-width: 1260px; }
 
