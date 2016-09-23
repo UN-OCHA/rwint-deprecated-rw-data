@@ -836,8 +836,9 @@ $(document).ready(function() {
 	var dimensions = [];
 	var isGAReady = false;
 
-	var genericDimensions =  [{id:"yearMonth", name:"date.created", title:"Number of content published"},
-							  {id:"dimension6", name:"country", title:"Country"},
+	var timelineDimensions =  [{id:"yearMonth", name:"date.created", title:""}];
+
+	var genericDimensions =  [{id:"dimension6", name:"country", title:"Country"},
                  	          {id:"dimension8", name:"theme", title:"Theme"},
                  	          {id:"dimension7", name:"source", title:"Organization"}
                 	         ];
@@ -869,7 +870,7 @@ $(document).ready(function() {
 	function createCharts(container, dimensions){
 		$(container).empty();
 		$(container).append('<h2>' + currentContentType + ' Data</h2>');
-		for (var i=1; i<dimensions.length; i++){
+		for (var i=0; i<dimensions.length; i++){
             $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
         }
 	}
@@ -907,7 +908,7 @@ $(document).ready(function() {
 		}
 
 		//get data
-		for (var i=1; i<dimensions.length; i++){
+		for (var i=0; i<dimensions.length; i++){
 			if (util.getMetric() == "sessions"){
 				gaapi.getData(dimensions[i]);
 			}
@@ -917,8 +918,8 @@ $(document).ready(function() {
 		}
 
 		//get timeline data
-		rwapi.getData(genericDimensions[0]);
-		if (isGAReady) gaapi.getData(genericDimensions[0], 'timelineDataReady');
+		rwapi.getData(timelineDimensions[0]);
+		if (isGAReady) gaapi.getData(timelineDimensions[0], 'timelineDataReady');
 	}
 
 // +--------------------------------------------------------------+
@@ -947,7 +948,7 @@ $(document).ready(function() {
 	$(document).on( "gaReady", function(){
 		isGAReady = true;
 		//get timeline data
-		gaapi.getData(genericDimensions[0], 'timelineDataReady');
+		gaapi.getData(timelineDimensions[0], 'timelineDataReady');
 	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
 		drawTimelineChart(result, 'sessions');
