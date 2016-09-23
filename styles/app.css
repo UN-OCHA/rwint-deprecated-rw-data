@@ -30,10 +30,6 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 .truncate { display: inline-block; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; visibility: hidden; }
 
-::-webkit-scrollbar { -webkit-appearance: none; width: 7px; }
-
-::-webkit-scrollbar-thumb { border-radius: 3px; background-color: #999; -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5); }
-
 @media (min-width: 1200px) { .container { width: 1170px; } }
 
 @media (max-width: 1025px) { .truncate { width: 115px; } }
@@ -48,8 +44,11 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
   .container { margin: 0 auto; padding: 0 15px; }
   .intro { padding-top: 50px; }
   .intro li:first-child { border: 0; }
+  .intro p { width: 100%; }
   .no-pad { padding: 0 15px; }
   footer { margin: 0 auto; padding-left: 15px; padding-right: 15px; } }
+
+@media (max-width: 300px) { .truncate { width: 60px; } }
 
 h1 { font-size: 24px; margin-bottom: 0; }
 

@@ -68,320 +68,6 @@ var util = null,
 
 $(document).ready(initUtil);
 
-$(document).ready(function() {
-
-	var userDimensions = [{id:"country", name:"user_country", title:"User Country", type:"bar", count:5},
-                          {id:"language", name:"language", title:"User Language", type:"bar", count:8},
-                          {id:"userGender", name:"user_gender", title:"User Gender", type:"pie", count:2},
-                          {id:"userAgeBracket", name:"user_age", title:"User Age", type:"bar"},
-                          {id:"deviceCategory", name:"user_device", title:"User Device", type:"pie", count:3},
-                          {id:"browser", name:"browser", title:"User Browsers", type:"bar", count:5}
-                	     ];
-    var loadInterval;
-    var intervalDelay = 1000;
-
-
-	$(document).on( "gaReady", userDataInit );
-	createCharts('.user-container', userDimensions);
-	
-	function userDataInit(){
-		getUserCharts();
-
-		//define data events
-		$(document).on( "userDataReady", function(e, result, dimensionObj, total, sampleObj, topTotal) {
-			//format dimension name
-			var dimension = util.formatName(dimensionObj.name);
-			var chart = $('.' + dimension);
-			chart.parent().removeClass('nodata').removeClass('loading');
-
-		 	if (chart.children().length==0){
-		 		if (dimensionObj.type=="pie")
-		 			drawPieChart(result, dimensionObj, total, sampleObj);
-		 		else
-			    	drawBarChart(result, dimensionObj, sampleObj, topTotal);
-			}
-		    else{
-		 		if (dimensionObj.type=="pie"){
-		 			drawPieChart(result, dimensionObj, total, sampleObj);
-		 		}
-		 		else
-			    	updateBarChart(result, dimensionObj, sampleObj, topTotal);
-		    }
-		});
-		$(document).on( "applyFilters", function(e) {
-			loadInterval = setInterval(checkGALoad, intervalDelay);
-		});	
-	}
-
-	function checkGALoad(){
-		if (gaapi.loadCount >= 4){
-		}
-		else{
-			clearInterval(loadInterval);
-			getUserCharts();
-		}
-	}
-
-	function createCharts(container, dimensions){
-		//$(container).empty();
-		$(container).append('<h2>User Data</h2>');
-		for (var i=0; i<dimensions.length; i++){
-            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
-        }
-	}
-
-	function getUserCharts(){
-		$('.user-chart').parent().removeClass('nodata').addClass('loading');
-		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
-		for (var i=0; i<userDimensions.length; i++){
-			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
-		}
-	}
-
-	function writeSampleData(element, sampleObj){
-		var sampleData = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
-		if (element.find('.sampleData').length){
-			element.find('.sampleData').html(sampleData);
-		}
-		else{
-			element.append('<p class="sampleData">' + sampleData + '</p>');
-		}
-	}
-
-	//define chart variables
-	var barHeight = 20,
-		barMargin = 25,
-		duration = 500,
-		scrollbarWidth = 25,
-		countWidth = 20,
-		charLimit = (util.isMobile()) ? 15 : 22,
-	    margin = {top: 20, right: 0, bottom: 30, left: 0},
-	    labelWidth = Math.round($('.chart-container').width()*.55);
-		width = $('.chart-container').width() - margin.left - margin.right,
-		labelY = barHeight-4,
-		formatNum = d3.format('0,000');
-
-	var x = d3.scale.linear().range([0, width-labelWidth-scrollbarWidth-countWidth]);
-	var y;
-
-	//chart functions
-	function drawBarChart(data, dimensionObj, sampleObj, topTotal){
-		var dimension = util.formatName(dimensionObj.name);
-		var chartName = '.' + dimension;
-		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
-		
-		writeSampleData($(chartName).parent().parent(), sampleObj);
-	
-		//define ranges
-		x.domain([0, d3.max(data, function(d) { return d.count; })]);
-		y = d3.scale.ordinal()
-		    .rangeRoundBands([0, (barHeight+barMargin) * data.length]);
-	    
-		var color = d3.scale.linear()
-			.domain([0, d3.max(data, function(d) { return d.count; })])
-			.range(["#EEE3FC", "#B490E3"]);
-
-		//define chart
-		var chart = d3.select(chartName)
-		    .attr('width', width)
-		    .attr('height', (barHeight+barMargin) * data.length);
-
-		//add bars
-		var bar = chart.selectAll('rect')
-		    .data(data)
-		  .enter().append('rect')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-		    .attr('x', labelWidth+countWidth) 
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
-		    .attr('height', barHeight)
-			.attr('width', 0)
-			.transition()
-	       	.duration(duration)
-		    .attr('width', function(d) { return x(d.count); });
-
-		//add labels
-		var label = chart.selectAll('.label')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'label')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return d.value; })
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-		    .text(function (d) { return d.value; });
-
-		//add counts
-		var count = chart.selectAll('.count')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'count')
-		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-		    .text(function(d) { return formatNum(d.count); });
-
-		//initialize tooltips
-		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
-	}
-
-
-	function updateBarChart(data, dimensionObj, sampleObj, topTotal){
-		var chartName = '.' + dimensionObj.name;
-		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
-		writeSampleData($(chartName).parent().parent(), sampleObj);
-
-		x.domain([0, d3.max(data, function(d) { return d.count; })]);
-		var chart = d3.select(chartName); 
-
-		var color = d3.scale.linear()
-			.domain([0, d3.max(data, function(d) { return d.count; })])
-			.range(["#EEE3FC", "#B490E3"]);
-
-		//update bars
-		var bar = chart.selectAll('rect')
-			.data(data);
-		bar.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('width', function(d) { return x(d.count); });
-		bar.enter()
-			.append('rect')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-			.attr('x', labelWidth+countWidth) 
-	        .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('height', barHeight)
-	        .attr('width', 0) 
-			.transition()
-	   		.duration(duration)
-			.attr('width', function(d) { return x(d.count); });
-		bar.exit().remove();
-
-		//update labels
-		var label = chart.selectAll('.label')
-			.data(data);
-		label.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return d.value; })
-		    .text(function (d) {
-			    if(d.value.length > charLimit)
-			        return d.value.substring(0,charLimit)+'...';
-			    else
-			        return d.value;                       
-			});
-		label.enter()
-			.append('text')
-		  	.attr('class', 'label')
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return d.value; })
-		    .text(function (d) { return d.value; });
-		label.exit().remove();
-
-		//update counts
-		var count = chart.selectAll('.count')
-			.data(data);
-		count.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.enter()
-			.append('text')
-		  	.attr('class', 'count')
-		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.exit().remove();
-
-		//reset and initialize tooltips
-		$('[data-toggle="notooltip"]').tooltip('destroy');
-		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
-	}	
-	
-
-	function drawPieChart(data, dimensionObj, total, sampleObj){
-		var dimension = util.formatName(dimensionObj.name);
-		var chartName = '.' + dimension;
-		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
-		$(chartName).parent().addClass('pie-chart');
-		writeSampleData($(chartName).parent().parent(), sampleObj);
-
-		if ($(chartName).children().length>0){
-			d3.select(chartName).selectAll("svg > *").remove();
-			$('[data-toggle="tooltip"]').tooltip('destroy');
-		}
-
-		var w = $('.chart-inner').width(),
-	    	h = $('.chart-inner').height(),
-	    	radius = h / 2;
-
-	    var xpos = (util.isMobile()) ? (w/2) - 10 : (w/2),
-	    	ypos = (h/2) + 10;
-
-		var color = d3.scale.ordinal()
-    		.range(["#B490E3", "#c9aeec", "#e8daf9"]);		
-
-		var arc = d3.svg.arc()
-		    .outerRadius(radius - 10)
-		    .innerRadius(0);
-
-		var labelArc = d3.svg.arc()
-		    .outerRadius(radius - 40)
-		    .innerRadius(radius - 40);
-
-		var pie = d3.layout.pie()
-		    .sort(null)
-		    .value(function(d) { return d.count; });
-
-		var svg = d3.select(chartName).append("svg")
-		    .attr("width", w)
-		    .attr("height", h)
-		  .append("g")
-		    .attr("transform", "translate(" + xpos + "," + ypos + ")");
-
-		var g = svg.selectAll(".arc")
-			.data(pie(data))
-		  .enter().append("g")
-		    .attr("class", "arc");
-
-		g.append("path")
-			.attr("d", arc)
-		    .style("fill", function(d) { return color(d.data.value); });
-
-		g.append("text")
-		    .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-		    .attr("dy", ".35em")
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.round((d.value/total)*100)+'%'; })
-		    .text(function(d) { return d.data.value; });
-
-		//initialize tooltips
-		$('[data-toggle="tooltip"]').tooltip({ container:'body', animation:false});
-
-		//manual tooltip trigger events
-		$('.arc').mouseover(function(e){
-			e.stopPropagation();
-			$(this).find('text').tooltip('show');
-		}).mouseout(function(e){
-			e.stopPropagation();
-			$(this).find('text').tooltip('hide');
-		});
-	}
-});
-
 (function() {
 	var filters = window.filters = {
 
@@ -837,6 +523,315 @@ $(document).ready(function() {
 	};
 })();
 $(document).ready(function() {
+
+	var userDimensions = [{id:"country", name:"user_country", title:"User Country", type:"bar", count:5},
+                          {id:"language", name:"language", title:"User Language", type:"bar", count:8},
+                          {id:"userGender", name:"user_gender", title:"User Gender", type:"pie", count:2},
+                          {id:"userAgeBracket", name:"user_age", title:"User Age", type:"bar"},
+                          {id:"deviceCategory", name:"user_device", title:"User Device", type:"pie", count:3},
+                          {id:"browser", name:"browser", title:"User Browsers", type:"bar", count:5}
+                	     ];
+    var loadInterval;
+    var intervalDelay = 1000;
+
+
+	$(document).on( "gaReady", userDataInit );
+	createCharts('.user-container', userDimensions);
+	
+	function userDataInit(){
+		getUserCharts();
+
+		//define data events
+		$(document).on( "userDataReady", function(e, result, dimensionObj, total, sampleObj, topTotal) {
+			//format dimension name
+			var dimension = util.formatName(dimensionObj.name);
+			var chart = $('.' + dimension);
+			chart.parent().removeClass('nodata').removeClass('loading');
+
+		 	if (chart.children().length==0){
+		 		if (dimensionObj.type=="pie")
+		 			drawPieChart(result, dimensionObj, total, sampleObj);
+		 		else
+			    	drawBarChart(result, dimensionObj, sampleObj, topTotal);
+			}
+		    else{
+		 		if (dimensionObj.type=="pie"){
+		 			drawPieChart(result, dimensionObj, total, sampleObj);
+		 		}
+		 		else
+			    	updateBarChart(result, dimensionObj, sampleObj, topTotal);
+		    }
+		});
+		$(document).on( "applyFilters", function(e) {
+			loadInterval = setInterval(checkGALoad, intervalDelay);
+		});	
+	}
+
+	function checkGALoad(){
+		if (gaapi.loadCount >= 4){
+		}
+		else{
+			clearInterval(loadInterval);
+			getUserCharts();
+		}
+	}
+
+	function createCharts(container, dimensions){
+		//$(container).empty();
+		$(container).append('<h2>User Data</h2>');
+		for (var i=0; i<dimensions.length; i++){
+            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+        }
+	}
+
+	function getUserCharts(){
+		$('.user-chart').parent().removeClass('nodata').addClass('loading');
+		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
+		for (var i=0; i<userDimensions.length; i++){
+			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
+		}
+	}
+
+	function writeSampleData(element, sampleObj){
+		var sampleData = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
+		if (element.find('.sampleData').length){
+			element.find('.sampleData').html(sampleData);
+		}
+		else{
+			element.append('<p class="sampleData">' + sampleData + '</p>');
+		}
+	}
+
+	//define chart variables
+	var barHeight = 20,
+		barMargin = 25,
+		duration = 500,
+		scrollbarWidth = 25,
+		countWidth = 20,
+		charLimit = (util.isMobile()) ? 15 : 22,
+	    margin = {top: 20, right: 0, bottom: 30, left: 0},
+	    labelWidth = Math.round($('.chart-container').width()*.55);
+		width = $('.chart-container').width() - margin.left - margin.right,
+		labelY = barHeight-4,
+		formatNum = d3.format('0,000');
+
+	var x = d3.scale.linear().range([0, width-labelWidth-scrollbarWidth-countWidth]);
+	var y;
+
+	//chart functions
+	function drawBarChart(data, dimensionObj, sampleObj, topTotal){
+		var dimension = util.formatName(dimensionObj.name);
+		var chartName = '.' + dimension;
+		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		
+		writeSampleData($(chartName).parent().parent(), sampleObj);
+	
+		//define ranges
+		x.domain([0, d3.max(data, function(d) { return d.count; })]);
+		y = d3.scale.ordinal()
+		    .rangeRoundBands([0, (barHeight+barMargin) * data.length]);
+	    
+		var color = d3.scale.linear()
+			.domain([0, d3.max(data, function(d) { return d.count; })])
+			.range(["#EEE3FC", "#B490E3"]);
+
+		//define chart
+		var chart = d3.select(chartName)
+		    .attr('width', width)
+		    .attr('height', (barHeight+barMargin) * data.length);
+
+		//add bars
+		var bar = chart.selectAll('rect')
+		    .data(data)
+		  .enter().append('rect')
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
+		    .attr('x', labelWidth+countWidth) 
+		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+      		.style('fill', function(d) { return color(d.count); })
+		    .attr('height', barHeight)
+			.attr('width', 0)
+			.transition()
+	       	.duration(duration)
+		    .attr('width', function(d) { return x(d.count); });
+
+		//add labels
+		var label = chart.selectAll('.label')
+			.data(data)
+		  .enter().append('text')
+		  	.attr('class', 'label')
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return d.value; })
+		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+		  	.attr('dy', labelY)
+		    .text(function (d) { return util.truncateText(d.value); });
+
+		//add counts
+		var count = chart.selectAll('.count')
+			.data(data)
+		  .enter().append('text')
+		  	.attr('class', 'count')
+		  	.attr('x', labelWidth+15)
+		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+		  	.attr('dy', labelY)
+		    .text(function(d) { return formatNum(d.count); });
+
+		//initialize tooltips
+		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
+	}
+
+
+	function updateBarChart(data, dimensionObj, sampleObj, topTotal){
+		var chartName = '.' + dimensionObj.name;
+		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		writeSampleData($(chartName).parent().parent(), sampleObj);
+
+		x.domain([0, d3.max(data, function(d) { return d.count; })]);
+		var chart = d3.select(chartName); 
+
+		var color = d3.scale.linear()
+			.domain([0, d3.max(data, function(d) { return d.count; })])
+			.range(["#EEE3FC", "#B490E3"]);
+
+		//update bars
+		var bar = chart.selectAll('rect')
+			.data(data);
+		bar.transition()
+			.duration(duration)
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('data-original-title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
+      		.style('fill', function(d) { return color(d.count); })
+			.attr('width', function(d) { return x(d.count); });
+		bar.enter()
+			.append('rect')
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
+			.attr('x', labelWidth+countWidth) 
+	        .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+      		.style('fill', function(d) { return color(d.count); })
+			.attr('height', barHeight)
+	        .attr('width', 0) 
+			.transition()
+	   		.duration(duration)
+			.attr('width', function(d) { return x(d.count); });
+		bar.exit().remove();
+
+		//update labels
+		var label = chart.selectAll('.label')
+			.data(data);
+		label.transition()
+			.duration(duration)
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('data-original-title', function(d) { return d.value; })
+		    .text(function (d) { return util.truncateText(d.value); });
+		label.enter()
+			.append('text')
+		  	.attr('class', 'label')
+		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+		  	.attr('dy', labelY)
+			.transition()
+			.duration(duration)
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return d.value; })
+		    .text(function (d) { return d.value; });
+		label.exit().remove();
+
+		//update counts
+		var count = chart.selectAll('.count')
+			.data(data);
+		count.transition()
+			.duration(duration)
+		    .text(function(d) { return formatNum(d.count); });
+		count.enter()
+			.append('text')
+		  	.attr('class', 'count')
+		  	.attr('x', labelWidth+15)
+		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
+		  	.attr('dy', labelY)
+			.transition()
+			.duration(duration)
+		    .text(function(d) { return formatNum(d.count); });
+		count.exit().remove();
+
+		//reset and initialize tooltips
+		$('[data-toggle="notooltip"]').tooltip('destroy');
+		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
+	}	
+	
+
+	function drawPieChart(data, dimensionObj, total, sampleObj){
+		var dimension = util.formatName(dimensionObj.name);
+		var chartName = '.' + dimension;
+		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		$(chartName).parent().addClass('pie-chart');
+		writeSampleData($(chartName).parent().parent(), sampleObj);
+
+		if ($(chartName).children().length>0){
+			d3.select(chartName).selectAll("svg > *").remove();
+			$('[data-toggle="tooltip"]').tooltip('destroy');
+		}
+
+		var w = $('.chart-inner').width(),
+	    	h = $('.chart-inner').height(),
+	    	radius = (w<h) ? w/2 : h/2;
+
+	    var xpos = (util.isMobile()) ? (w/2) - 10 : (w/2),
+	    	ypos = (h/2) + 10;
+
+		var color = d3.scale.ordinal()
+    		.range(["#B490E3", "#c9aeec", "#e8daf9"]);		
+
+		var arc = d3.svg.arc()
+		    .outerRadius(radius - 10)
+		    .innerRadius(0);
+
+		var labelArc = d3.svg.arc()
+		    .outerRadius(radius - 40)
+		    .innerRadius(radius - 40);
+
+		var pie = d3.layout.pie()
+		    .sort(null)
+		    .value(function(d) { return d.count; });
+
+		var svg = d3.select(chartName).append("svg")
+		    .attr("width", w)
+		    .attr("height", h)
+		  .append("g")
+		    .attr("transform", "translate(" + xpos + "," + ypos + ")");
+
+		var g = svg.selectAll(".arc")
+			.data(pie(data))
+		  .enter().append("g")
+		    .attr("class", "arc");
+
+		g.append("path")
+			.attr("d", arc)
+		    .style("fill", function(d) { return color(d.data.value); });
+
+		g.append("text")
+		    .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+		    .attr("dy", ".35em")
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return Math.round((d.value/total)*100)+'%'; })
+		    .text(function(d) { return d.data.value; });
+
+		//initialize tooltips
+		$('[data-toggle="tooltip"]').tooltip({ container:'body', animation:false});
+
+		//manual tooltip trigger events
+		$('.arc').mouseover(function(e){
+			e.stopPropagation();
+			$(this).find('text').tooltip('show');
+		}).mouseout(function(e){
+			e.stopPropagation();
+			$(this).find('text').tooltip('hide');
+		});
+	}
+});
+
+$(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
 	var isGAReady = false;
@@ -1142,7 +1137,10 @@ $(document).ready(function() {
 		label.transition()
 			.duration(duration)
 		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return d.value; })
+		  	.attr('data-original-title', function(d) { 
+		  		if (d.value=='Peru') return ' Peru '; //catch browser from converting color name to color hex
+		  		else return d.value; 
+		  	})
 		    .text(function (d) { return util.truncateText(d.value); });
 		label.enter()
 			.append('text')
@@ -1201,7 +1199,7 @@ $(document).ready(function() {
 		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
 
-		var margin = {left: 35, top: 10, right: 25, bottom: 45};
+		var margin = {left: 35, top: 10, right: 20, bottom: 45};
 		var width = $('.chart-container').width() - margin.left - margin.right;
 		var height = $(chartName).parent().height() - margin.top - margin.bottom;
 
@@ -5110,7 +5108,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			}
 			var rwQuery = { "facets": facets };
 
-			//if (dimension=="date.created") console.log(JSON.stringify(rwQuery));
+			//if (dimension=="country") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
 			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
