@@ -832,6 +832,7 @@ $(document).ready(function() {
 $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
+	var isGAReady = false;
 
 	var genericDimensions =  [{id:"yearMonth", name:"date.created", title:"Number of content published"},
 							  {id:"dimension6", name:"country", title:"Country"},
@@ -872,9 +873,9 @@ $(document).ready(function() {
 	}
 
 	function createTimelineCharts(){
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of ' + filters.content_type + ' published</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">*Not filtered by date created or date visited</p></div></div>');
 
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">*Not filtered by date created or date visited</p></div></div>');
 
 	}
 
@@ -904,7 +905,7 @@ $(document).ready(function() {
 		}
 
 		//get data
-		for (var i=0; i<dimensions.length; i++){
+		for (var i=1; i<dimensions.length; i++){
 			if (util.getMetric() == "sessions"){
 				gaapi.getData(dimensions[i]);
 			}
@@ -912,6 +913,10 @@ $(document).ready(function() {
 				rwapi.getData(dimensions[i]);
 			}
 		}
+
+		//get timeline data
+		rwapi.getData(genericDimensions[0]);
+		if (isGAReady) gaapi.getData(genericDimensions[0], 'timelineDataReady');
 	}
 
 // +--------------------------------------------------------------+
@@ -938,14 +943,11 @@ $(document).ready(function() {
 		}
 	});
 	$(document).on( "gaReady", function(){
+		isGAReady = true;
 		//get timeline data
 		gaapi.getData(genericDimensions[0], 'timelineDataReady');
 	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
-		// for (var i=0;i<result.length;i++){
-		// 	var d = (result[i].value).substr(0, 4) + '-' + (result[i].value).substr(4, 2) + '-01';
-		// 	result[i].value = d;
-		// }
 		drawTimelineChart(result, 'sessions');
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
@@ -1173,6 +1175,7 @@ $(document).ready(function() {
 		//parse dates
 		var parseDate = d3.time.format("%Y-%m-%d").parse,
     		formatValue = d3.format(","),
+    		formatTooltipDate = d3.time.format("%b %Y"),
     		bisectDate = d3.bisector(function(d) { return d.value; }).left;
 
 		for (var i=0;i<data.length;i++){
@@ -1187,16 +1190,16 @@ $(document).ready(function() {
 
 		var chartName = '.timeline-'+type;
 		var chartContainer = $(chartName).parent().parent();
-		if (type=='content') $(chartContainer).find('h3 span').html('Number of ' + filters.filterParams.content_type + ' published');
+		var title = (type=='content') ? 'Number of ' + filters.filterParams.content_type + ' published per month' :'Number of sessions for ' + filters.filterParams.content_type + ' per month';
+		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
 
-		var margin = {left: 40, top: 10, right: 40, bottom: 23};
+		var margin = {left: 35, top: 10, right: 25, bottom: 45};
 		var width = $('.chart-container').width() - margin.left - margin.right;
 		var height = $(chartName).parent().height() - margin.top - margin.bottom;
 
 		if ($(chartName).children().length>0){
 			d3.select(chartName).selectAll("svg > *").remove();
-			//$('[data-toggle="tooltip"]').tooltip('destroy');
 		}
 
 		var x = d3.time.scale()
@@ -1213,8 +1216,8 @@ $(document).ready(function() {
 		    .innerTickSize(-height)
 		    .outerTickSize(0)
     		.tickPadding(10)
-    		.ticks(5)
-		    .tickFormat(d3.time.format("%m/%d/%y"));
+    		.ticks(9)
+		    .tickFormat(d3.time.format("%b %y"));
 
 		var yAxis = d3.svg.axis().scale(y)
 		    .orient("left")
@@ -1238,10 +1241,20 @@ $(document).ready(function() {
 		    .attr("height", height + margin.top + margin.bottom).append("g")
 		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+
+		var div = chart.append("div")	
+    		.attr("class", "tooltip")				
+    		.style("opacity", 0);
+
 		chart.append("g")
 		    .attr("class", "x axis")
 		    .attr("transform", "translate(0," + height + ")")
 		    .call(xAxis)
+	        .selectAll("text")  
+	            .style("text-anchor", "end")
+	            .attr("dx", "-.8em")
+	            .attr("dy", ".15em")
+	            .attr("transform", "rotate(-65)" );
 
 		chart.append("g")
 		    .attr("class", "y axis")
@@ -1252,59 +1265,38 @@ $(document).ready(function() {
 	        .attr("class", "area")
 	        .attr("d", area);
 
-	    chart.append("path")      
-	        .attr("class", "line")
-	        .attr("d", line(data));
-
 	    chart.append("path")
 	        .data([data])
 	        .attr("class", "line")
 	        .attr("d", line);
 
-		var focus = chart.append("g")
-			.attr("class", "focus")
-			.style("display", "none");
+	    var dot = chart.selectAll("dot")	
+        .data(data)			
+	    .enter().append("circle")			
+	    	.attr("class", "dot")					
+	        .attr("r", 5)		
+	        .attr("cx", function(d) { return x(d.value); })		 
+	        .attr("cy", function(d) { return y(d.count); })	
+		  	.attr('data-toggle', 'tooltip')
+		  	.attr('title', function(d) { return formatTooltipDate(d.value) + ": " + formatValue(d.count); })	
+		  	.on("mouseover", function() { d3.select(this).style('opacity', 1); })
+		  	.on("mouseout", function() { d3.select(this).style('opacity', 0); });
 
-		focus.append("circle")
-			.attr("r", 4.5);
-
-		focus.append("text")
-			.attr("text-anchor", "middle")
-			.attr("dy", "-12");
-
-		chart.append("rect")
-			.attr("class", "overlay")
-			.attr("width", width)
-			.attr("height", height)
-			.on("mouseover", function() { focus.style("display", null); })
-			.on("mouseout", function() { focus.style("display", "none"); })
-			.on("mousemove", mousemove);
-
-		function mousemove() {
-			var x0 = x.invert(d3.mouse(this)[0]),
-			    i = bisectDate(data, x0, 1),
-			    d0 = data[i - 1],
-			    d1 = data[i];
-
-		    if (d0 && d1){
-			    var d = x0 - d0.value > d1.value - x0 ? d1 : d0;
-				focus.attr("transform", "translate(" + x(d.value) + "," + y(d.count) + ")");
-				focus.select("text").text(formatValue(d.count));
-			}
-		}
+		//init tooltips
+		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}
 
 
 
 
 	// $(window).resize(resizeCharts);
- //    function resizeCharts(){
- //    	width = $('.chart-container').width() - margin.left - margin.right;
- //    	x.range([1, width-labelWidth-scrollbarWidth-countWidth]);
- //    	d3.selectAll('.chart').selectAll('rect').each(function(d) {
+	//    function resizeCharts(){
+	//    	width = $('.chart-container').width() - margin.left - margin.right;
+	//    	x.range([1, width-labelWidth-scrollbarWidth-countWidth]);
+	//    	d3.selectAll('.chart').selectAll('rect').each(function(d) {
 	// 	    d3.select(this).attr('width', function(d) { return x(d.count); });
 	// 	});
- //    }
+	//    }
 
 	window.addEventListener('orientationchange', function() {
 		window.location.reload();
@@ -1526,8 +1518,8 @@ $(document).ready(function() {
             //     "viewId":gaapi.VIEW_ID,
             //     "dateRanges":[
             //       {
-            //         "startDate":gaapi.formatDate(filterParams.visited_startDate),
-            //         "endDate":gaapi.formatDate(filterParams.visited_endDate)
+            //         "startDate":startDate,
+            //         "endDate":endDate
             //       }],
             //     "metrics":[
             //       {

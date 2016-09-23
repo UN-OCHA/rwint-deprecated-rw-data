@@ -30,6 +30,10 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 .truncate { display: inline-block; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; visibility: hidden; }
 
+::-webkit-scrollbar { -webkit-appearance: none; width: 7px; }
+
+::-webkit-scrollbar-thumb { border-radius: 3px; background-color: #999; -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5); }
+
 @media (min-width: 1200px) { .container { width: 1170px; } }
 
 @media (max-width: 1025px) { .truncate { width: 115px; } }
@@ -87,21 +91,19 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .chart.timeline-chart .line, .chart-container .chart-inner .user-chart.timeline-chart .line { fill: none; stroke: #0988BB; stroke-width: 2px; }
 
-.chart-container .chart-inner .chart.timeline-chart .tick text, .chart-container .chart-inner .user-chart.timeline-chart .tick text { font-size: 12px; }
+.chart-container .chart-inner .chart.timeline-chart .tick text, .chart-container .chart-inner .user-chart.timeline-chart .tick text { fill: #999; font-size: 11px; }
 
 .chart-container .chart-inner .chart.timeline-chart .tick line, .chart-container .chart-inner .user-chart.timeline-chart .tick line { opacity: 1; }
 
 .chart-container .chart-inner .chart.timeline-chart .area, .chart-container .chart-inner .user-chart.timeline-chart .area { fill: rgba(9, 136, 187, 0.5); stroke-width: 0; }
 
-.chart-container .chart-inner .chart.timeline-chart rect.overlay, .chart-container .chart-inner .user-chart.timeline-chart rect.overlay { fill: none; pointer-events: all; }
-
-.chart-container .chart-inner .chart.timeline-chart .focus circle, .chart-container .chart-inner .user-chart.timeline-chart .focus circle { fill: #0988BB; }
+.chart-container .chart-inner .chart.timeline-chart .dot, .chart-container .chart-inner .user-chart.timeline-chart .dot { opacity: 0; fill: #0988BB; }
 
 .chart-container .chart-inner .chart.timeline-chart.timeline-sessions .line, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .line { stroke: #B490E3; }
 
 .chart-container .chart-inner .chart.timeline-chart.timeline-sessions .area, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .area { fill: rgba(180, 144, 227, 0.5); }
 
-.chart-container .chart-inner .chart.timeline-chart.timeline-sessions .focus circle, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .focus circle { fill: #B490E3; }
+.chart-container .chart-inner .chart.timeline-chart.timeline-sessions .dot, .chart-container .chart-inner .user-chart.timeline-chart.timeline-sessions .dot { fill: #B490E3; }
 
 .chart-container .chart-inner.loading .chart, .chart-container .chart-inner.loading .user-chart { opacity: 0.3; }
 
