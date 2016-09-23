@@ -880,9 +880,9 @@ $(document).ready(function() {
 	}
 
 	function createTimelineCharts(){
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">*Not filtered by date created or date visited</p></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">Not filtered by date created or date visited</p></div></div>');
 
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">*Not filtered by date created or date visited</p></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">Not filtered by date created or date visited</p></div></div>');
 
 	}
 
