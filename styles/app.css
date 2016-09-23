@@ -66,7 +66,7 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .title .fa { color: #999; font-size: 8px; padding: 0 9px 0 6px; vertical-align: 2px; }
 
-.chart-container .sampleData { color: #999; font-size: 11px; margin: 10px 0 0; min-height: 14px; }
+.chart-container .citation { color: #999; font-size: 11px; margin: 10px 0 0; min-height: 14px; }
 
 .chart-container .chart-inner { height: 248px; overflow-x: hidden; overflow-y: auto; text-align: center; }
 
@@ -118,7 +118,7 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .loader { display: none; left: 50%; position: absolute; top: 20%; transform: translate(-50%, -50%); }
 
-.chart-container .chart-inner.loading + .sampleData { opacity: 0.3; }
+.chart-container .chart-inner.loading + .citation { opacity: 0.3; }
 
 .flex-grid { align-content: stretch; display: flex; flex-flow: column wrap; height: 950px; max-width: 1260px; }
 

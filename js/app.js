@@ -166,13 +166,6 @@ $(document).ready(initUtil);
 	        });
 	        $(".content_type-dropdown").parent().find('.select2-selection__rendered').addClass('active');
 
-	        var countryData = filters.rwURL + '&facets[0][field]=country&facets[0][sort]=value:asc&facets[0][limit]=70000&limit=0';
-	        $.getJSON(countryData, function(obj) {
-	            $.each(obj.embedded.facets.country.data, function(key, val) {
-	                $(".country-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
 	        var themesData = filters.rwURL + '&facets[0][field]=theme&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(themesData, function(obj) {
 	            $.each(obj.embedded.facets.theme.data, function(key, val) {
@@ -180,30 +173,23 @@ $(document).ready(initUtil);
 	            });
 	        });
 
-	        //reports sources
-	        var reportsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ac05ac76403f6ef25730e17ef82ca28/raw/cc9d647e385e8bbe81a43031efc952c174023855/rw-trends-v2-sources-reports-active';
-	        $.getJSON(reportsSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	           		var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#reportsSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
-	        //jobs sources
-	        var jobsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/457b06c64e8bba1b8b6ef11186f6967c/raw/9bc7e582e0565452d2f0311930eef6b119169392/rw-trends-v2-sources-jobs-active';
-	        $.getJSON(jobsSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#jobsSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
-	        //training sources
-	        var trainingSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ee4895373df182af99b62fd6623f3c4/raw/45e97c336906d955410d765375aa4f7e662c4810/rw-trends-v2-sources-training-active';
-	        $.getJSON(trainingSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#trainingSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
+	        //set filters with cached data from rw github
+	        var dataURL = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/';
+	        var arr = [{data: 'countries.json', filter: '.country-dropdown'},
+	        		   {data: 'sources-reports-active.json', filter: '#reportsSourcesFilter'},
+	        		   {data: 'sources-jobs-active.json', filter: '#jobsSourcesFilter'},
+	        		   {data: 'sources-training-active.json', filter: '#trainingSourcesFilter'},
+	        		   {data: 'disasters.json', filter: '.disaster-dropdown'}];
+	        for (var i=0;i<arr.length;i++){
+	        	(function(i) {
+			        $.getJSON(dataURL + arr[i].data, function(obj) {
+			            $.each(obj, function(key, val) {
+			                var value = (val.fields.shortname!=undefined && val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
+			                $(arr[i].filter).append("<option>" + value + "</option>");
+			            });
+			        });
+			    })(i);
+	        }
 
 	        //reports filters
 	        var formatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
@@ -213,12 +199,12 @@ $(document).ready(initUtil);
 	            });
 	        });
 
-	        var disasterData = 'https://gist.githubusercontent.com/hernandezrivera/3a8bb70b15779d18a08368fa68382a77/raw/9bb169272dc64f0d9258e73c8db949dca28e432c/rw-trends-v2-disasters';
-	        $.getJSON(disasterData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                $(".disaster-dropdown").append("<option>" + val.fields.name + "</option>");
-	            });
-	        });
+	        // var disasterData = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/disasters.json';
+	        // $.getJSON(disasterData, function(obj) {
+	        //     $.each(obj, function(key, val) {
+	        //         $(".disaster-dropdown").append("<option>" + val.fields.name + "</option>");
+	        //     });
+	        // });
 
 	        var disasterTypeData = filters.rwURL + '&facets[0][field]=disaster_type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(disasterTypeData, function(obj) {
@@ -592,13 +578,13 @@ $(document).ready(function() {
 		}
 	}
 
-	function writeSampleData(element, sampleObj){
-		var sampleData = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
-		if (element.find('.sampleData').length){
-			element.find('.sampleData').html(sampleData);
+	function setCitation(element, sampleObj){
+		var citation = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'Source: Google Analytics API. This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
+		if (element.find('.citation').length){
+			element.find('.citation').html(citation);
 		}
 		else{
-			element.append('<p class="sampleData">' + sampleData + '</p>');
+			element.append('<p class="citation">' + citation + '</p>');
 		}
 	}
 
@@ -625,7 +611,7 @@ $(document).ready(function() {
 		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
 		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
 		
-		writeSampleData($(chartName).parent().parent(), sampleObj);
+		setCitation($(chartName).parent().parent(), sampleObj);
 	
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -686,7 +672,7 @@ $(document).ready(function() {
 		var chartName = '.' + dimensionObj.name;
 		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
 		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
-		writeSampleData($(chartName).parent().parent(), sampleObj);
+		setCitation($(chartName).parent().parent(), sampleObj);
 
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
 		var chart = d3.select(chartName); 
@@ -766,7 +752,7 @@ $(document).ready(function() {
 		var chartName = '.' + dimension;
 		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
 		$(chartName).parent().addClass('pie-chart');
-		writeSampleData($(chartName).parent().parent(), sampleObj);
+		setCitation($(chartName).parent().parent(), sampleObj);
 
 		if ($(chartName).children().length>0){
 			d3.select(chartName).selectAll("svg > *").remove();
@@ -876,9 +862,9 @@ $(document).ready(function() {
 	}
 
 	function createTimelineCharts(){
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">Not filtered by date created or date visited</p></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="citation">Source: ReliefWeb API. Not filtered by date created or date visited</p></div></div>');
 
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="sampleData">Not filtered by date created or date visited</p></div></div>');
+		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="citation">Source: Google Analytics API. Not filtered by date created or date visited</p></div></div>');
 
 	}
 
@@ -974,7 +960,7 @@ $(document).ready(function() {
 		var chartParent = $(chart).parent();
 		setChartTitle(chartParent.parent(), obj.title);
 		chartParent.find('.nodata-msg').text(msg);
-		chartParent.parent().find('.sampleData').text('');
+		chartParent.parent().find('.citation').text('');
 		chartParent.stop(true).addClass('nodata').removeClass('loading');
 		d3.select(chart).selectAll("*").remove();
 	}
@@ -985,13 +971,14 @@ $(document).ready(function() {
 		$('body').attr('data-metric', util.getMetric());
 	}
 
-	function writeSampleData(element, sampleObj){
-		var sampleData = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
-		if (element.find('.sampleData').length){
-			element.find('.sampleData').html(sampleData);
+	function setCitation(chart, sampleObj){
+		var source = (chart.find('.chart').hasClass('user-chart') || util.getMetric()=='sessions') ? 'Source: Google Analytics API.' : 'Source: ReliefWeb API';
+		var citation = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? source + ' This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : source;
+		if (chart.find('.citation').length){
+			chart.find('.citation').html(citation);
 		}
 		else{
-			element.append('<p class="sampleData">' + sampleData + '</p>');
+			chart.append('<p class="citation">' + citation + '</p>');
 		}
 	}
 	
@@ -1023,7 +1010,7 @@ $(document).ready(function() {
 		var chartName = '.' + dimension;
 		var chartContainer = $(chartName).parent().parent();
 		setChartTitle(chartContainer, dimensionObj.title);
-		writeSampleData(chartContainer, sampleObj);
+		setCitation(chartContainer, sampleObj);
 
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -1092,7 +1079,7 @@ $(document).ready(function() {
 		var chartName = '.' + dimension;
 		var chartContainer = $(chartName).parent().parent();
 		setChartTitle(chartContainer, dimensionObj.title);
-		writeSampleData(chartContainer, sampleObj);
+		setCitation(chartContainer, sampleObj);
 
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
 		var chart = d3.select(chartName)
@@ -5137,6 +5124,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			for (var i=0; i<d.length; i++) {
 				var item = d[i];
 				total = total + Number(item.count);
+				//if (dimensionObj.name=='date.created') console.log(d.length, item.value, item.count);
 				result.push({id: i, value: item.value, count: item.count });
 			}
 
