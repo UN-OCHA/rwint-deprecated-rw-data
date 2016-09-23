@@ -199,13 +199,6 @@ $(document).ready(initUtil);
 	            });
 	        });
 
-	        // var disasterData = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/disasters.json';
-	        // $.getJSON(disasterData, function(obj) {
-	        //     $.each(obj, function(key, val) {
-	        //         $(".disaster-dropdown").append("<option>" + val.fields.name + "</option>");
-	        //     });
-	        // });
-
 	        var disasterTypeData = filters.rwURL + '&facets[0][field]=disaster_type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
 	        $.getJSON(disasterTypeData, function(obj) {
 	            $.each(obj.embedded.facets.disaster_type.data, function(key, val) {
@@ -609,7 +602,7 @@ $(document).ready(function() {
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
 		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		
 		setCitation($(chartName).parent().parent(), sampleObj);
 	
@@ -671,7 +664,7 @@ $(document).ready(function() {
 	function updateBarChart(data, dimensionObj, sampleObj, topTotal){
 		var chartName = '.' + dimensionObj.name;
 		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		setCitation($(chartName).parent().parent(), sampleObj);
 
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -750,7 +743,7 @@ $(document).ready(function() {
 	function drawPieChart(data, dimensionObj, total, sampleObj){
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
-		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions</span><hr>').addClass('title');
+		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		$(chartName).parent().addClass('pie-chart');
 		setCitation($(chartName).parent().parent(), sampleObj);
 
@@ -967,7 +960,8 @@ $(document).ready(function() {
 
 	function setChartTitle(chart, title){
 		var metric = (chart.find('.chart').hasClass('user-chart')) ? 'sessions' : util.getMetric();
-		chart.find('h3').html('By ' + title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of ' + metric + '</span><hr>').addClass('title');
+		var description = (metric=='sessions') ? 'Number of sessions for ' : 'Number of ';
+		chart.find('h3').html('By ' + title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>' + description + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		$('body').attr('data-metric', util.getMetric());
 	}
 
