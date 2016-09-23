@@ -68,453 +68,6 @@ var util = null,
 
 $(document).ready(initUtil);
 
-(function() {
-	var filters = window.filters = {
-
-	    filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
-	    contentType: 'reports',
-	    rwURL: '',
-	    currScroll: 0,
-	    timelineStartDate: '2016-04-01T00:00:00+0000',
-
-	    init: function(){
-	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
-
-	    	//init filter vars
-	        var d = util.getStartEndDate();
-            filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, dimensions:[]};
-            filters.filterParams.dimensions.push({dimension:'', gadimension:'dimension1', value:'Report'});
-
-	        //init filters
-	        filters.initSelectFilters();
-
-	        //init clear filters button
-	        $('.clear-filters-btn').on('click', function(){
-	        	filters.resetAllFilters();
-	        });
-
-			//hide filters for short delay while components resolve
-	        $('.filter-menu').css('opacity',0).delay(1).queue(function(next){
-	        	$('.jobs-sources, .training-sources').hide();
-	        	$('.jobs-filters, .training-filters').hide();
-			    if (util.getMetric()!='sessions') $('.dateVisitedFilter').hide(0);
-			    next();
-			});
-
-	        //show filters on GA ready event
-	        $(document).on( "gaReady", function(e) {
-			    //get querystring
-	        	filters.getQuery();
-
-	        	//show filters
-	        	$('.filter-menu').animate({ opacity: 1 }, 300);
-	        	$('.filters').find('.loading').remove();
-	        });
-
-	        //mobile events
-            if (util.isMobile()){
-	            $('.filter-mobile').on('click', function(e){
-	            	e.preventDefault();
-	            	filters.filterToggle();
-        			filters.currScroll = $(window).scrollTop();
-	            });
-
-	            $('.close-toggle').on('click', function(e){
-	            	e.preventDefault();
-        			$(window).scrollTop(filters.currScroll);
-	            	filters.filterToggle();
-	            });
-
-	            //define scroll listener to make filter bar sticky in mobile view
-	            // $(window).scroll(function (event){
-	            //     var scroll = $(window).scrollTop();
-	            //     var limit = $('header').height();
-	            //     if (scroll >= limit){
-	            //         $('.filter-mobile').addClass('sticky-top');
-	            //     }
-	            //     else{
-	            //         $('.filter-mobile').removeClass('sticky-top');
-	            //     }
-	            // });
-            }
-	    },
-
-	    //mobile filter toggle 
-	    filterToggle: function(){
-        	if ($('.filters').hasClass('expanded')){
-        		$('.filters').removeClass('expanded');
-        		$('.filters').animate({top: '100vh'}, 350, 'swing');
-        	}
-        	else{
-	    		$('.filters').addClass('expanded');
-        		$('.filters').animate({top: '0'}, 350, 'swing', function(){
-        			$(window).scrollTop(0);
-        		});
-        	}
-	    },
-
-	    initSelectFilters: function(){
-	        //init dimension filters
-	        $(".dropdown").select2({
-	            minimumResultsForSearch: 10
-	        });
-
-	        var contentTypes = [{ id:'reports', text:'Reports'}, { id:'jobs', text:'Jobs' }, { id:'training', text:'Training' }];
-	        $(".content_type-dropdown").select2({
-	            data: contentTypes,
-	            minimumResultsForSearch: 10,
-	        });
-	        $(".content_type-dropdown").parent().find('.select2-selection__rendered').addClass('active');
-
-	        var countryData = filters.rwURL + '&facets[0][field]=country&facets[0][sort]=value:asc&facets[0][limit]=70000&limit=0';
-	        $.getJSON(countryData, function(obj) {
-	            $.each(obj.embedded.facets.country.data, function(key, val) {
-	                $(".country-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var themesData = filters.rwURL + '&facets[0][field]=theme&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(themesData, function(obj) {
-	            $.each(obj.embedded.facets.theme.data, function(key, val) {
-	                $(".themes-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        //reports sources
-	        var reportsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ac05ac76403f6ef25730e17ef82ca28/raw/cc9d647e385e8bbe81a43031efc952c174023855/rw-trends-v2-sources-reports-active';
-	        $.getJSON(reportsSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	           		var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#reportsSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
-	        //jobs sources
-	        var jobsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/457b06c64e8bba1b8b6ef11186f6967c/raw/9bc7e582e0565452d2f0311930eef6b119169392/rw-trends-v2-sources-jobs-active';
-	        $.getJSON(jobsSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#jobsSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
-	        //training sources
-	        var trainingSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ee4895373df182af99b62fd6623f3c4/raw/45e97c336906d955410d765375aa4f7e662c4810/rw-trends-v2-sources-training-active';
-	        $.getJSON(trainingSourcesData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-	                $("#trainingSourcesFilter").append("<option>" + org + "</option>");
-	            });
-	        });
-
-	        //reports filters
-	        var formatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(formatData, function(obj) {
-	            $.each(obj.embedded.facets.format.data, function(key, val) {
-	                $(".format-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var disasterData = 'https://gist.githubusercontent.com/hernandezrivera/3a8bb70b15779d18a08368fa68382a77/raw/9bb169272dc64f0d9258e73c8db949dca28e432c/rw-trends-v2-disasters';
-	        $.getJSON(disasterData, function(obj) {
-	            $.each(obj, function(key, val) {
-	                $(".disaster-dropdown").append("<option>" + val.fields.name + "</option>");
-	            });
-	        });
-
-	        var disasterTypeData = filters.rwURL + '&facets[0][field]=disaster_type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(disasterTypeData, function(obj) {
-	            $.each(obj.embedded.facets.disaster_type.data, function(key, val) {
-	                $(".disasterType-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var vulnerableGroupData = filters.rwURL + '&facets[0][field]=vulnerable_groups&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(vulnerableGroupData, function(obj) {
-	            $.each(obj.embedded.facets.vulnerable_groups.data, function(key, val) {
-	                $(".vulnerableGroups-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        //jobs filters
-	        filters.contentType = 'jobs';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
-	        var typeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(typeData, function(obj) {
-	            $.each(obj.embedded.facets.type.data, function(key, val) {
-	                $(".jobtype-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var experienceData = filters.rwURL + '&facets[0][field]=experience&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(experienceData, function(obj) {
-	            $.each(obj.embedded.facets.experience.data, function(key, val) {
-	                $(".experience-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-			var careerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(careerCategoryData, function(obj) {
-	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
-	                $(".careerCategory-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        //training filters
-	        filters.contentType = 'training';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
-	        var costData = filters.rwURL + '&facets[0][field]=cost&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(costData, function(obj) {
-	            $.each(obj.embedded.facets.cost.data, function(key, val) {
-	                $(".cost-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-			var trainingCareerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingCareerCategoryData, function(obj) {
-	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
-	                $(".trainingCareerCategory-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var trainingTypeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingTypeData, function(obj) {
-	            $.each(obj.embedded.facets.type.data, function(key, val) {
-	                $(".trainingType-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var trainingFormatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingFormatData, function(obj) {
-	            $.each(obj.embedded.facets.format.data, function(key, val) {
-	                $(".trainingFormat-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        //init datepicker
-	        $('.input-daterange').datepicker({
-	        	autoclose: true,
-	        	clearBtn: true,
-	        	disableTouchKeyboard: true,
-	        	format: 'yyyy-mm-dd',
-	        	startDate: '1996-01-01',
-	        	endDate: '0d'
-	        }).on('clearDate', function(e){
-	        	$('.input-daterange input').each(function() {
-				    $(this).datepicker('clearDates');
-				});
-	        });
-	        $('.submit-btn').click(function(){
-	        	var daterange = $(this).parent().find('.input-daterange');
-	        	if (daterange.find('input').val()!=''){
-	        		filters.onFilterSelect(daterange);
-	        	}
-	        });
-
-	        // dropdown select listener
-	        $('.dropdown').on('change', function(e){ 
-	        	filters.onFilterSelect(e.currentTarget);
-	        });
-
-	        //metric select listener
-	        $('.metric-selector input').change(function(){
-	        	filters.onMetricSelect();
-	        });
-	    },
-
-	    onMetricSelect: function(){
-	    	//reset date visited filter if metric is content published
-			if (util.getMetric()=="content published"){
-				var d = util.getStartEndDate();
-				filters.filterParams.visited_startDate = d.start_date; 
-				filters.filterParams.visited_endDate = d.end_date;
-				$('.dateVisitedFilter').hide(0);
-			}
-			else{
-				$('.dateVisitedFilter').show(0);
-			}
-
-			//set query
-			var uri = new URI();
-			uri.setQuery('metric', util.getMetric());
-			window.history.pushState('object', 'title', uri);
-
-			//apply filters
-            filters.applyFilters();
-	    },
-
-	    onFilterSelect: function(target){
-			filters.filterParams.metric = util.getMetric();
-    		filters.filterParams.content_type = $('.content_type-dropdown').val();
-            filters.filterParams.dimensions = [];
-            filters.filterParams.created_startDate = '';
-	        filters.filterParams.created_endDate = '';
-            $.each($('.dropdown'), function(id, item) {
-            	var val = $(item).val();
-                if ($(item).is(':visible') && $(item).val()!="All"){
-                	$(item).parent().find('label').addClass('active');
-                	var val = $(item).val();
-
-                	$(item).parent().find('.select2-selection__rendered').addClass('active');
-                	if ($(item).hasClass('content_type-dropdown')){
-                		val = filters.setContentTypeFilters(val);
-                	}
-
-                	//save params to filter object
-                	filters.filterParams.dimensions.push({dimension:$(item).attr('data-dimension'), gadimension:$(item).attr('data-gadimension'), value:val});
-               	}
-               	else{
-                	$(item).parent().find('label').removeClass('active');
-                	$(item).parent().find('.select2-selection__rendered').removeClass('active');
-               	}
-            });
-
-            //get date range input values
-            if ($(target).hasClass('input-daterange') && $(target).is(':visible')){
-        		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
-            	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
-        	}
-            
-  			//send the apply filters event
-            filters.applyFilters();
-
-			//add to query string
-			filters.setQuery();
-
-            //send tracking event
-            dataLayer.push({
-			     'event': 'Filter selection',
-			     'filtername': $(target).attr('id'), 
-			     'value': $(target).val()
-			})
-	    },
-
-	    setContentTypeFilters: function(val){
-	    	//show/hide content type specific organizations 
-    		$('.sources').hide();
-    		$('.' + val + '-sources').show();
-			
-			//show/hide content type specific filters
-    		$('.sub-menu').hide();
-    		$('.' + val + '-filters').show();
-
-    		switch (val) { 
-				case 'jobs': 
-					val = 'Job';
-					break;
-				case 'training': 
-					val = 'Training';
-					break;		
-				default:
-					val = 'Report';
-			}
-			$('.sub-filters-header').html(val + ' Filter Options');
-			return val;
-	    },
-
-	    getQuery: function(){
-	    	var uri = new URI(); 
-	    	var result = URI.parseQuery(uri.query());
-	    	if (!$.isEmptyObject(result)){
-	    		for (var key in result) {
-	    			if (result[key]!=undefined){
-	    				if (key=="metric"){
-	    					$('input:radio[value="' + result[key] + '"]').prop('checked', true);
-	    					if (result[key]=='sessions') $('.dateVisitedFilter').show(0);
-		    			}
-	    				else if (key.indexOf('dimension') >= 0){
-	    					var dim = key.split('-')[1];
-							var item = $('select[data-dimension="' + dim + '"]');
-     						
-     						//set filter dropdown to value
-     						filters.setFilter(item, result[key]);
-
-							//save params to filter object
-        					filters.filterParams.dimensions.push({dimension:dim, gadimension:item.attr('data-gadimension'), value:result[key]});
-	    				}
-    					else if (key=='content_type'){
-    						var item = $('.' + key + '-dropdown');
-    						filters.setContentTypeFilters(result[key]);
-
-	    					//set filter dropdown to value
-	    					filters.setFilter(item, result[key]);
-
-     						//save params to filter object
-    						filters.filterParams[key] = result[key];
-						}
-						else{
-							//set date filters
-	    					var r = result[key].split('T');
-	    					var date = r[0].replace(/-/g, '\/').replace(/T.+/, '');
-	    					$('[data-mode="' + key.split('_')[0] + '"]').data("datepicker").pickers[1].setDate(new Date(date));
-
-     						//save params to filter object
-							filters.filterParams[key] = result[key];
-						}
-	    			}
-	    		}
-		      	filters.applyFilters();
-	    	}
-	    },
-
-	    setQuery: function(){
-	    	filters.clearQuery();
-	    	var uri = new URI(); 
-	    	var params = filters.filterParams;
-	    	for (var key in params) {
-	    		if (params.hasOwnProperty(key) && params[key]!='') {
-	    		  	if ($.isArray(params[key])){
-	    		  		for (var i=0;i<params[key].length;i++){
-	    		  			var dim = params[key][i].dimension;
-	    		  			if (params[key][i].dimension!=''){
-    		  					uri.setQuery('dimension-'+dim, params[key][i].value);
-    		  				}
-	    		  		}
-	    		  	}
-	    		  	else{
-	    		  		uri.setQuery(key, params[key]);
-	    		  	}
-				}
-	    	}
-	    	window.history.pushState('object', 'title', uri);
-	    },
-
-	    clearQuery: function(){
-	    	var uri = new URI();
-			uri.removeSearch(/\w/);
-	    	window.history.pushState('object', 'title', uri);
-	    },
-
-	    resetAllFilters: function(){
-			filters.setFilter($('.dropdown'), 'All');
-			filters.setFilter($('.content_type-dropdown'), 'reports');
-			filters.setFilter($('.visited-date-dropdown'), $('.visited-date-dropdown option:first-child').val());
-			filters.setContentTypeFilters('reports');
-			var d = util.getStartEndDate();
- 	       	filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, created_startDate: '', created_endDate: '', dimensions:[]};
-    		filters.clearQuery();       
-            filters.applyFilters();
-	    },
-
-	    setFilter: function(filter, value){
-	    	if (filter.is(':visible')){
-		    	filter.select2().val(value).trigger('change.select2');
-	    		if (value=='All'){
-                	filter.parent().find('label').removeClass('active');
-                	filter.parent().find('.select2-selection__rendered').removeClass('active');
-	    		}
-	    		else{
-                	filter.parent().find('label').addClass('active');
-                	filter.parent().find('.select2-selection__rendered').addClass('active');
-	    		}
-		    }
-	    },
-
-	    applyFilters: function(){
-	    	//send the apply filters event
-			$(document).trigger('applyFilters');
-	    }
-
-	};
-})();
 $(document).ready(function() {
 
 	var userDimensions = [{id:"country", name:"user_country", title:"User Country", type:"bar", count:5},
@@ -829,6 +382,460 @@ $(document).ready(function() {
 	}
 });
 
+(function() {
+	var filters = window.filters = {
+
+	    filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
+	    contentType: 'reports',
+	    rwURL: '',
+	    currScroll: 0,
+	    timelineStartDate: '2016-04-01T00:00:00+0000',
+
+	    init: function(){
+	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
+
+	    	//init filter vars
+	        var d = util.getStartEndDate();
+            filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, dimensions:[]};
+            filters.filterParams.dimensions.push({dimension:'', gadimension:'dimension1', value:'Report'});
+
+	        //init filters
+	        filters.initSelectFilters();
+
+	        //init clear filters button
+	        $('.clear-filters-btn').on('click', function(){
+	        	filters.resetAllFilters();
+	        });
+
+			//hide filters for short delay while components resolve
+	        $('.filter-menu').css('opacity',0).delay(1).queue(function(next){
+	        	$('.jobs-sources, .training-sources').hide();
+	        	$('.jobs-filters, .training-filters').hide();
+			    if (util.getMetric()!='sessions') $('.dateVisitedFilter').hide(0);
+			    next();
+			});
+
+	        //show filters on GA ready event
+	        $(document).on( "gaReady", function(e) {
+			    //get querystring
+	        	filters.getQuery();
+
+	        	//show filters
+	        	$('.filter-menu').animate({ opacity: 1 }, 300);
+	        	$('.filters').find('.loading').remove();
+	        });
+
+	        //mobile events
+            if (util.isMobile()){
+	            $('.filter-mobile').on('click', function(e){
+	            	e.preventDefault();
+	            	filters.filterToggle();
+        			filters.currScroll = $(window).scrollTop();
+	            });
+
+	            $('.close-toggle').on('click', function(e){
+	            	e.preventDefault();
+        			$(window).scrollTop(filters.currScroll);
+	            	filters.filterToggle();
+	            });
+
+	            //define scroll listener to make filter bar sticky in mobile view
+	            // $(window).scroll(function (event){
+	            //     var scroll = $(window).scrollTop();
+	            //     var limit = $('header').height();
+	            //     if (scroll >= limit){
+	            //         $('.filter-mobile').addClass('sticky-top');
+	            //     }
+	            //     else{
+	            //         $('.filter-mobile').removeClass('sticky-top');
+	            //     }
+	            // });
+            }
+	    },
+
+	    //mobile filter toggle 
+	    filterToggle: function(){
+        	if ($('.filters').hasClass('expanded')){
+        		$('.filters').removeClass('expanded');
+        		$('.filters').animate({top: '100vh'}, 350, 'swing');
+        	}
+        	else{
+	    		$('.filters').addClass('expanded');
+        		$('.filters').animate({top: '0'}, 350, 'swing', function(){
+        			$(window).scrollTop(0);
+        		});
+        	}
+	    },
+
+	    initSelectFilters: function(){
+	        //init dimension filters
+	        $(".dropdown").select2({
+	            minimumResultsForSearch: 10
+	        });
+
+	        var contentTypes = [{ id:'reports', text:'Reports'}, { id:'jobs', text:'Jobs' }, { id:'training', text:'Training' }];
+	        $(".content_type-dropdown").select2({
+	            data: contentTypes,
+	            minimumResultsForSearch: 10,
+	        });
+	        $(".content_type-dropdown").parent().find('.select2-selection__rendered').addClass('active');
+
+	        var countryData = filters.rwURL + '&facets[0][field]=country&facets[0][sort]=value:asc&facets[0][limit]=70000&limit=0';
+	        $.getJSON(countryData, function(obj) {
+	            $.each(obj.embedded.facets.country.data, function(key, val) {
+	                $(".country-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var themesData = filters.rwURL + '&facets[0][field]=theme&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(themesData, function(obj) {
+	            $.each(obj.embedded.facets.theme.data, function(key, val) {
+	                $(".themes-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        //reports sources
+	        var reportsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ac05ac76403f6ef25730e17ef82ca28/raw/cc9d647e385e8bbe81a43031efc952c174023855/rw-trends-v2-sources-reports-active';
+	        $.getJSON(reportsSourcesData, function(obj) {
+	            $.each(obj, function(key, val) {
+	           		var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
+	                $("#reportsSourcesFilter").append("<option>" + org + "</option>");
+	            });
+	        });
+	        //jobs sources
+	        var jobsSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/457b06c64e8bba1b8b6ef11186f6967c/raw/9bc7e582e0565452d2f0311930eef6b119169392/rw-trends-v2-sources-jobs-active';
+	        $.getJSON(jobsSourcesData, function(obj) {
+	            $.each(obj, function(key, val) {
+	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
+	                $("#jobsSourcesFilter").append("<option>" + org + "</option>");
+	            });
+	        });
+	        //training sources
+	        var trainingSourcesData = 'https://gist.githubusercontent.com/hernandezrivera/8ee4895373df182af99b62fd6623f3c4/raw/45e97c336906d955410d765375aa4f7e662c4810/rw-trends-v2-sources-training-active';
+	        $.getJSON(trainingSourcesData, function(obj) {
+	            $.each(obj, function(key, val) {
+	                var org = (val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
+	                $("#trainingSourcesFilter").append("<option>" + org + "</option>");
+	            });
+	        });
+
+	        //reports filters
+	        var formatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(formatData, function(obj) {
+	            $.each(obj.embedded.facets.format.data, function(key, val) {
+	                $(".format-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var disasterData = 'https://gist.githubusercontent.com/hernandezrivera/3a8bb70b15779d18a08368fa68382a77/raw/9bb169272dc64f0d9258e73c8db949dca28e432c/rw-trends-v2-disasters';
+	        $.getJSON(disasterData, function(obj) {
+	            $.each(obj, function(key, val) {
+	                $(".disaster-dropdown").append("<option>" + val.fields.name + "</option>");
+	            });
+	        });
+
+	        var disasterTypeData = filters.rwURL + '&facets[0][field]=disaster_type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(disasterTypeData, function(obj) {
+	            $.each(obj.embedded.facets.disaster_type.data, function(key, val) {
+	                $(".disasterType-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var vulnerableGroupData = filters.rwURL + '&facets[0][field]=vulnerable_groups&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(vulnerableGroupData, function(obj) {
+	            $.each(obj.embedded.facets.vulnerable_groups.data, function(key, val) {
+	                $(".vulnerableGroups-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        //jobs filters
+	        filters.contentType = 'jobs';
+	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        var typeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(typeData, function(obj) {
+	            $.each(obj.embedded.facets.type.data, function(key, val) {
+	                $(".jobtype-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var experienceData = filters.rwURL + '&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
+	        $.getJSON(experienceData, function(obj) {
+	        	var exp = obj.embedded.facets['experience'].data;
+	        	var expid = obj.embedded.facets['experience.id'].data;
+	        	for (var i=0;i<expid.length;i++){
+	        		for (var j=0;j<exp.length;j++){
+	        			if (exp[j].count == expid[i].count){
+	        				$(".experience-dropdown").append("<option>" + exp[j].value + "</option>");
+	        				break;
+	        			}
+	        		}
+	        	}
+	        });
+
+			var careerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(careerCategoryData, function(obj) {
+	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
+	                $(".careerCategory-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        //training filters
+	        filters.contentType = 'training';
+	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
+	        var costData = filters.rwURL + '&facets[0][field]=cost&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(costData, function(obj) {
+	            $.each(obj.embedded.facets.cost.data, function(key, val) {
+	                $(".cost-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+			var trainingCareerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(trainingCareerCategoryData, function(obj) {
+	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
+	                $(".trainingCareerCategory-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var trainingTypeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(trainingTypeData, function(obj) {
+	            $.each(obj.embedded.facets.type.data, function(key, val) {
+	                $(".trainingType-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        var trainingFormatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
+	        $.getJSON(trainingFormatData, function(obj) {
+	            $.each(obj.embedded.facets.format.data, function(key, val) {
+	                $(".trainingFormat-dropdown").append("<option>" + val.value + "</option>");
+	            });
+	        });
+
+	        //init datepicker
+	        $('.input-daterange').datepicker({
+	        	autoclose: true,
+	        	clearBtn: true,
+	        	disableTouchKeyboard: true,
+	        	format: 'yyyy-mm-dd',
+	        	startDate: '1996-01-01',
+	        	endDate: '0d'
+	        }).on('clearDate', function(e){
+	        	$('.input-daterange input').each(function() {
+				    $(this).datepicker('clearDates');
+				});
+	        });
+	        $('.submit-btn').click(function(){
+	        	var daterange = $(this).parent().find('.input-daterange');
+	        	if (daterange.find('input').val()!=''){
+	        		filters.onFilterSelect(daterange);
+	        	}
+	        });
+
+	        // dropdown select listener
+	        $('.dropdown').on('change', function(e){ 
+	        	filters.onFilterSelect(e.currentTarget);
+	        });
+
+	        //metric select listener
+	        $('.metric-selector input').change(function(){
+	        	filters.onMetricSelect();
+	        });
+	    },
+
+	    onMetricSelect: function(){
+	    	//reset date visited filter if metric is content published
+			if (util.getMetric()=="content published"){
+				var d = util.getStartEndDate();
+				filters.filterParams.visited_startDate = d.start_date; 
+				filters.filterParams.visited_endDate = d.end_date;
+				$('.dateVisitedFilter').hide(0);
+			}
+			else{
+				$('.dateVisitedFilter').show(0);
+			}
+
+			//set query
+			var uri = new URI();
+			uri.setQuery('metric', util.getMetric());
+			window.history.pushState('object', 'title', uri);
+
+			//apply filters
+            filters.applyFilters();
+	    },
+
+	    onFilterSelect: function(target){
+			filters.filterParams.metric = util.getMetric();
+    		filters.filterParams.content_type = $('.content_type-dropdown').val();
+            filters.filterParams.dimensions = [];
+            filters.filterParams.created_startDate = '';
+	        filters.filterParams.created_endDate = '';
+            $.each($('.dropdown'), function(id, item) {
+            	var val = $(item).val();
+                if ($(item).is(':visible') && $(item).val()!="All"){
+                	$(item).parent().find('label').addClass('active');
+                	var val = $(item).val();
+
+                	$(item).parent().find('.select2-selection__rendered').addClass('active');
+                	if ($(item).hasClass('content_type-dropdown')){
+                		val = filters.setContentTypeFilters(val);
+                	}
+
+                	//save params to filter object
+                	filters.filterParams.dimensions.push({dimension:$(item).attr('data-dimension'), gadimension:$(item).attr('data-gadimension'), value:val});
+               	}
+               	else{
+                	$(item).parent().find('label').removeClass('active');
+                	$(item).parent().find('.select2-selection__rendered').removeClass('active');
+               	}
+            });
+
+            //get date range input values
+            if ($(target).hasClass('input-daterange') && $(target).is(':visible')){
+        		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
+            	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
+        	}
+            
+  			//send the apply filters event
+            filters.applyFilters();
+
+			//add to query string
+			filters.setQuery();
+
+            //send tracking event
+            dataLayer.push({
+			     'event': 'Filter selection',
+			     'filtername': $(target).attr('id'), 
+			     'value': $(target).val()
+			})
+	    },
+
+	    setContentTypeFilters: function(val){
+	    	//show/hide content type specific organizations 
+    		$('.sources').hide();
+    		$('.' + val + '-sources').show();
+			
+			//show/hide content type specific filters
+    		$('.sub-menu').hide();
+    		$('.' + val + '-filters').show();
+
+    		switch (val) { 
+				case 'jobs': 
+					val = 'Job';
+					break;
+				case 'training': 
+					val = 'Training';
+					break;		
+				default:
+					val = 'Report';
+			}
+			$('.sub-filters-header').html(val + ' Filter Options');
+			return val;
+	    },
+
+	    getQuery: function(){
+	    	var uri = new URI(); 
+	    	var result = URI.parseQuery(uri.query());
+	    	if (!$.isEmptyObject(result)){
+	    		for (var key in result) {
+	    			if (result[key]!=undefined){
+	    				if (key=="metric"){
+	    					$('input:radio[value="' + result[key] + '"]').prop('checked', true);
+	    					if (result[key]=='sessions') $('.dateVisitedFilter').show(0);
+		    			}
+	    				else if (key.indexOf('dimension') >= 0){
+	    					var dim = key.split('-')[1];
+							var item = $('select[data-dimension="' + dim + '"]');
+     						
+     						//set filter dropdown to value
+     						filters.setFilter(item, result[key]);
+
+							//save params to filter object
+        					filters.filterParams.dimensions.push({dimension:dim, gadimension:item.attr('data-gadimension'), value:result[key]});
+	    				}
+    					else if (key=='content_type'){
+    						var item = $('.' + key + '-dropdown');
+    						filters.setContentTypeFilters(result[key]);
+
+	    					//set filter dropdown to value
+	    					filters.setFilter(item, result[key]);
+
+     						//save params to filter object
+    						filters.filterParams[key] = result[key];
+						}
+						else{
+							//set date filters
+	    					var r = result[key].split('T');
+	    					var date = r[0].replace(/-/g, '\/').replace(/T.+/, '');
+	    					$('[data-mode="' + key.split('_')[0] + '"]').data("datepicker").pickers[1].setDate(new Date(date));
+
+     						//save params to filter object
+							filters.filterParams[key] = result[key];
+						}
+	    			}
+	    		}
+		      	filters.applyFilters();
+	    	}
+	    },
+
+	    setQuery: function(){
+	    	filters.clearQuery();
+	    	var uri = new URI(); 
+	    	var params = filters.filterParams;
+	    	for (var key in params) {
+	    		if (params.hasOwnProperty(key) && params[key]!='') {
+	    		  	if ($.isArray(params[key])){
+	    		  		for (var i=0;i<params[key].length;i++){
+	    		  			var dim = params[key][i].dimension;
+	    		  			if (params[key][i].dimension!=''){
+    		  					uri.setQuery('dimension-'+dim, params[key][i].value);
+    		  				}
+	    		  		}
+	    		  	}
+	    		  	else{
+	    		  		uri.setQuery(key, params[key]);
+	    		  	}
+				}
+	    	}
+	    	window.history.pushState('object', 'title', uri);
+	    },
+
+	    clearQuery: function(){
+	    	var uri = new URI();
+			uri.removeSearch(/\w/);
+	    	window.history.pushState('object', 'title', uri);
+	    },
+
+	    resetAllFilters: function(){
+			filters.setFilter($('.dropdown'), 'All');
+			filters.setFilter($('.content_type-dropdown'), 'reports');
+			filters.setFilter($('.visited-date-dropdown'), $('.visited-date-dropdown option:first-child').val());
+			filters.setContentTypeFilters('reports');
+			var d = util.getStartEndDate();
+ 	       	filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, created_startDate: '', created_endDate: '', dimensions:[]};
+    		filters.clearQuery();       
+            filters.applyFilters();
+	    },
+
+	    setFilter: function(filter, value){
+	    	if (filter.is(':visible')){
+		    	filter.select2().val(value).trigger('change.select2');
+	    		if (value=='All'){
+                	filter.parent().find('label').removeClass('active');
+                	filter.parent().find('.select2-selection__rendered').removeClass('active');
+	    		}
+	    		else{
+                	filter.parent().find('label').addClass('active');
+                	filter.parent().find('.select2-selection__rendered').addClass('active');
+	    		}
+		    }
+	    },
+
+	    applyFilters: function(){
+	    	//send the apply filters event
+			$(document).trigger('applyFilters');
+	    }
+
+	};
+})();
 $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
