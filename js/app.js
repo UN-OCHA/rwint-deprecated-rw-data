@@ -275,8 +275,8 @@ $(document).ready(initUtil);
 	            });
 	        });
 
-	        //init datepicker
-	        $('.input-daterange').datepicker({
+	        //init date created datepicker
+	        $('#dateCreatedPicker').datepicker({
 	        	autoclose: true,
 	        	clearBtn: true,
 	        	disableTouchKeyboard: true,
@@ -288,6 +288,21 @@ $(document).ready(initUtil);
 				    $(this).datepicker('clearDates');
 				});
 	        });
+
+	        //init date visited datepicker
+	        $('#dateVisitedPicker').datepicker({
+	        	autoclose: true,
+	        	clearBtn: true,
+	        	disableTouchKeyboard: true,
+	        	format: 'yyyy-mm-dd',
+	        	startDate: '2016-04-01',
+	        	endDate: '0d'
+	        }).on('clearDate', function(e){
+	        	$('.input-daterange input').each(function() {
+				    $(this).datepicker('clearDates');
+				});
+	        });
+
 	        $('.submit-btn').click(function(){
 	        	var daterange = $(this).parent().find('.input-daterange');
 	        	if (daterange.find('input').val()!=''){
@@ -515,7 +530,7 @@ $(document).ready(function() {
 
 
 	$(document).on( "gaReady", userDataInit );
-	createCharts('.user-container', userDimensions);
+	createCharts( ".user-container", userDimensions );
 	
 	function userDataInit(){
 		getUserCharts();
@@ -848,7 +863,7 @@ $(document).ready(function() {
 
 	function createCharts(container, dimensions){
 		$(container).empty();
-		$(container).append('<h2>' + currentContentType + ' Data</h2>');
+		$(container).append('<h2>' + currentContentType + ' Data <span></span></h2>');
 		for (var i=0; i<dimensions.length; i++){
             $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
         }
@@ -862,6 +877,7 @@ $(document).ready(function() {
 	}
 
 	function getCharts(){
+		if (util.getMetric()=='sessions') $('.generic-container, .contenttype-container').find('h2 span').html('(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')');
 		$('.chart').parent().delay(0).queue(function(next){
 		    $(this).removeClass('nodata').addClass('loading');
 		    next();
