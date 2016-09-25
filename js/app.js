@@ -45,9 +45,10 @@ var Util = function() {
 		roundNearest: function(num){
 			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
 			var nearest = Math.ceil(num/p)*p;
-			if (Math.abs(nearest-num) < Math.abs(num-(nearest-p))){
-				nearest = nearest + p;
-			}
+			// console.log(num, p, nearest, nearest-num, nearest-p);
+			// if (Math.abs(nearest-num) < Math.abs(num-(nearest-p))){
+			// 	nearest = nearest + p;
+			// }
 			return nearest;
 		}
 	};
@@ -76,9 +77,11 @@ $(document).ready(initUtil);
 	    rwURL: '',
 	    currScroll: 0,
 	    timelineStartDate: '2016-04-01T00:00:00+0000',
+	    jobsExperienceID: [],
 
 	    init: function(){
-	    	filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2&preset=analysis';
+	    	console.log('init filters');
+	    	filters.rwURL = 'https://api.reliefweb.int/v1/';
 
 	    	//init filter vars
 	        var d = util.getStartEndDate();
@@ -159,6 +162,7 @@ $(document).ready(initUtil);
 	            minimumResultsForSearch: 10
 	        });
 
+	        //set content types filter
 	        var contentTypes = [{ id:'reports', text:'Reports'}, { id:'jobs', text:'Jobs' }, { id:'training', text:'Training' }];
 	        $(".content_type-dropdown").select2({
 	            data: contentTypes,
@@ -166,113 +170,96 @@ $(document).ready(initUtil);
 	        });
 	        $(".content_type-dropdown").parent().find('.select2-selection__rendered').addClass('active');
 
-	        var themesData = filters.rwURL + '&facets[0][field]=theme&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(themesData, function(obj) {
-	            $.each(obj.embedded.facets.theme.data, function(key, val) {
-	                $(".themes-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
 
-	        //set filters with cached data from rw github
-	        var dataURL = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/';
-	        var arr = [{data: 'countries.json', filter: '.country-dropdown'},
-	        		   {data: 'sources-reports-active.json', filter: '#reportsSourcesFilter'},
-	        		   {data: 'sources-jobs-active.json', filter: '#jobsSourcesFilter'},
-	        		   {data: 'sources-training-active.json', filter: '#trainingSourcesFilter'},
-	        		   {data: 'disasters.json', filter: '.disaster-dropdown'}];
-	        for (var i=0;i<arr.length;i++){
+	        //set filters with cached data from RW github
+	        var gitDataURL = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/';
+	        var gitArr = [{data: 'countries.json', filter: '.country-dropdown'},
+	        		      {data: 'sources-reports-active.json', filter: '#reportsSourcesFilter'},
+	        		      {data: 'sources-jobs-active.json', filter: '#jobsSourcesFilter'},
+	        		      {data: 'sources-training-active.json', filter: '#trainingSourcesFilter'},
+	        		      {data: 'disasters.json', filter: '.disaster-dropdown'}];
+	        for (var i=0;i<gitArr.length;i++){
 	        	(function(i) {
-			        $.getJSON(dataURL + arr[i].data, function(obj) {
+			        $.getJSON(gitDataURL + gitArr[i].data, function(obj) {
 			            $.each(obj, function(key, val) {
 			                var value = (val.fields.shortname!=undefined && val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
-			                $(arr[i].filter).append("<option>" + value + "</option>");
+			                $(gitArr[i].filter).append("<option>" + value + "</option>");
 			            });
 			        });
 			    })(i);
 	        }
 
-	        //reports filters
-	        var formatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(formatData, function(obj) {
-	            $.each(obj.embedded.facets.format.data, function(key, val) {
-	                $(".format-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
+	        //get RW filters
+	        var reportsArr =  [{field: 'theme', filter: '.themes-dropdown'},
+	        		     	   {field: 'format', filter: '.format-dropdown'},
+	        		     	   {field: 'disaster_type', filter: '.disasterType-dropdown'},
+	        		     	   {field: 'vulnerable_groups', filter: '.vulnerableGroups-dropdown'}];
 
-	        var disasterTypeData = filters.rwURL + '&facets[0][field]=disaster_type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(disasterTypeData, function(obj) {
-	            $.each(obj.embedded.facets.disaster_type.data, function(key, val) {
-	                $(".disasterType-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
+	        var jobsArr = 	  [{field: 'type', filter: '.jobtype-dropdown'},
+	        		     	   {field: 'career_categories', filter: '.careerCategory-dropdown'}];
 
-	        var vulnerableGroupData = filters.rwURL + '&facets[0][field]=vulnerable_groups&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(vulnerableGroupData, function(obj) {
-	            $.each(obj.embedded.facets.vulnerable_groups.data, function(key, val) {
-	                $(".vulnerableGroups-dropdown").append("<option>" + val.value + "</option>");
-	            });
+	        var trainingArr = [{field: 'career_categories', filter: '.trainingCareerCategory-dropdown'},
+	        		     	   {field: 'cost', filter: '.cost-dropdown'},
+	        		     	   {field: 'type', filter: '.trainingType-dropdown'},
+	        		     	   {field: 'format', filter: '.trainingFormat-dropdown'}];
+	        
+	       	//reports filters
+	        var reportsQuery = filters.rwURL + 'reports?appname=rw-trends-v2&preset=analysis&limit=0';
+	        for (var i=0;i<reportsArr.length;i++){
+	        	reportsQuery = reportsQuery + '&facets['+i+'][field]='+reportsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
+	        }
+	        $.getJSON(reportsQuery, function(obj) {
+	        	for (var i=0;i<reportsArr.length;i++){
+	        		var data = obj.embedded.facets[reportsArr[i].field].data;
+		            for (var j=0;j<data.length;j++){
+			        	$(reportsArr[i].filter).append("<option>" + data[j].value + "</option>");
+			        }
+			    }
 	        });
 
 	        //jobs filters
-	        filters.contentType = 'jobs';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
-	        var typeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(typeData, function(obj) {
-	            $.each(obj.embedded.facets.type.data, function(key, val) {
-	                $(".jobtype-dropdown").append("<option>" + val.value + "</option>");
-	            });
+	        var jobsQuery = filters.rwURL + 'jobs?appname=rw-trends-v2&preset=analysis&limit=0';
+	        for (var i=0;i<jobsArr.length;i++){
+	        	jobsQuery = jobsQuery + '&facets['+i+'][field]='+jobsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
+	        }
+	        $.getJSON(jobsQuery, function(obj) {
+	        	for (var i=0;i<jobsArr.length;i++){
+	        		var data = obj.embedded.facets[jobsArr[i].field].data;
+		            for (var j=0;j<data.length;j++){
+			        	$(jobsArr[i].filter).append("<option>" + data[j].value + "</option>");
+			        }
+			    }
 	        });
 
-	        var experienceData = filters.rwURL + '&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
+	        //training filters
+	        var trainingQuery = filters.rwURL + 'training?appname=rw-trends-v2&preset=analysis&limit=0';
+	        for (var i=0;i<trainingArr.length;i++){
+	        	trainingQuery = trainingQuery + '&facets['+i+'][field]='+trainingArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
+	        }
+	        $.getJSON(trainingQuery, function(obj) {
+	        	for (var i=0;i<trainingArr.length;i++){
+	        		var data = obj.embedded.facets[trainingArr[i].field].data;
+		            for (var j=0;j<data.length;j++){
+			        	$(trainingArr[i].filter).append("<option>" + data[j].value + "</option>");
+			        }
+			    }
+	        });
+
+	        //get jobs experience filters
+	        filters.rwURL = filters.rwURL + 'jobs?appname=rw-trends-v2';
+	        var experienceData = filters.rwURL + 'jobs?appname=rw-trends-v2&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
 	        $.getJSON(experienceData, function(obj) {
 	        	var exp = obj.embedded.facets['experience'].data;
 	        	var expid = obj.embedded.facets['experience.id'].data;
 	        	for (var i=0;i<expid.length;i++){
 	        		for (var j=0;j<exp.length;j++){
 	        			if (exp[j].count == expid[i].count){
+	        				filters.jobsExperienceID.push(exp[j].value);
 	        				$(".experience-dropdown").append("<option>" + exp[j].value + "</option>");
 	        				break;
 	        			}
 	        		}
 	        	}
-	        });
-
-			var careerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(careerCategoryData, function(obj) {
-	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
-	                $(".careerCategory-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        //training filters
-	        filters.contentType = 'training';
-	        filters.rwURL = 'https://api.reliefweb.int/v1/' + filters.contentType + '?appname=rw-trends-v2';
-	        var costData = filters.rwURL + '&facets[0][field]=cost&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(costData, function(obj) {
-	            $.each(obj.embedded.facets.cost.data, function(key, val) {
-	                $(".cost-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-			var trainingCareerCategoryData = filters.rwURL + '&facets[0][field]=career_categories&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingCareerCategoryData, function(obj) {
-	            $.each(obj.embedded.facets.career_categories.data, function(key, val) {
-	                $(".trainingCareerCategory-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var trainingTypeData = filters.rwURL + '&facets[0][field]=type&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingTypeData, function(obj) {
-	            $.each(obj.embedded.facets.type.data, function(key, val) {
-	                $(".trainingType-dropdown").append("<option>" + val.value + "</option>");
-	            });
-	        });
-
-	        var trainingFormatData = filters.rwURL + '&facets[0][field]=format&facets[0][sort]=value:asc&facets[0][limit]=20&limit=0';
-	        $.getJSON(trainingFormatData, function(obj) {
-	            $.each(obj.embedded.facets.format.data, function(key, val) {
-	                $(".trainingFormat-dropdown").append("<option>" + val.value + "</option>");
-	            });
 	        });
 
 	        //init date created datepicker
@@ -537,24 +524,16 @@ $(document).ready(function() {
 
 		//define data events
 		$(document).on( "userDataReady", function(e, result, dimensionObj, total, sampleObj, topTotal) {
+			console.log('userDataReady', dimensionObj.name);
 			//format dimension name
 			var dimension = util.formatName(dimensionObj.name);
 			var chart = $('.' + dimension);
 			chart.parent().removeClass('nodata').removeClass('loading');
 
-		 	if (chart.children().length==0){
-		 		if (dimensionObj.type=="pie")
-		 			drawPieChart(result, dimensionObj, total, sampleObj);
-		 		else
-			    	drawBarChart(result, dimensionObj, sampleObj, topTotal);
-			}
-		    else{
-		 		if (dimensionObj.type=="pie"){
-		 			drawPieChart(result, dimensionObj, total, sampleObj);
-		 		}
-		 		else
-			    	updateBarChart(result, dimensionObj, sampleObj, topTotal);
-		    }
+		 	if (dimensionObj.type=="pie")
+	 			drawPieChart(result, dimensionObj, total, sampleObj);
+	 		else
+		    	drawBarChart(result, dimensionObj, sampleObj, topTotal);
 		});
 		$(document).on( "applyFilters", function(e) {
 			loadInterval = setInterval(checkGALoad, intervalDelay);
@@ -628,132 +607,48 @@ $(document).ready(function() {
 	    
 		var color = d3.scale.linear()
 			.domain([0, d3.max(data, function(d) { return d.count; })])
-			.range(["#EEE3FC", "#B490E3"]);
+			.range(['#EEE3FC', '#B490E3']);
 
 		//define chart
 		var chart = d3.select(chartName)
 		    .attr('width', width)
 		    .attr('height', (barHeight+barMargin) * data.length);
 
-		//add bars
-		var bar = chart.selectAll('rect')
+		var bar = chart.selectAll('g')
 		    .data(data)
-		  .enter().append('rect')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-		    .attr('x', labelWidth+countWidth) 
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
+		    .enter().append('g')
+		    .attr('transform', function(d, i) {
+		      return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
+		    });
+
+		//add bars
+		bar.append('rect')
+		    .attr('fill', function(d) { return color(d.count); })
+		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
-			.attr('width', 0)
+		    .attr('width', 0)
 			.transition()
-	       	.duration(duration)
+	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
 
-		//add labels
-		var label = chart.selectAll('.label')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'label')
+		//add label
+		bar.append('text')
+		   	.attr('class', 'label')
 		  	.attr('data-toggle', 'tooltip')
 		  	.attr('title', function(d) { return d.value; })
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-		    .text(function (d) { return util.truncateText(d.value); });
+		    .attr('dy', labelY)
+		    .text(function(d) { return util.truncateText(d.value); });
 
-		//add counts
-		var count = chart.selectAll('.count')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'count')
+		//add count
+		bar.append('text')
+		   	.attr('class', 'count')
 		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
+		    .attr('dy', labelY)
 		    .text(function(d) { return formatNum(d.count); });
 
 		//initialize tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}
-
-
-	function updateBarChart(data, dimensionObj, sampleObj, topTotal){
-		var chartName = '.' + dimensionObj.name;
-		var topTitle = (dimensionObj.count>0) ? 'Top ' + dimensionObj.count + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
-		setCitation($(chartName).parent().parent(), sampleObj);
-
-		x.domain([0, d3.max(data, function(d) { return d.count; })]);
-		var chart = d3.select(chartName); 
-
-		var color = d3.scale.linear()
-			.domain([0, d3.max(data, function(d) { return d.count; })])
-			.range(["#EEE3FC", "#B490E3"]);
-
-		//update bars
-		var bar = chart.selectAll('rect')
-			.data(data);
-		bar.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('width', function(d) { return x(d.count); });
-		bar.enter()
-			.append('rect')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return Math.ceil((d.count/topTotal)*100) + '%'; })
-			.attr('x', labelWidth+countWidth) 
-	        .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('height', barHeight)
-	        .attr('width', 0) 
-			.transition()
-	   		.duration(duration)
-			.attr('width', function(d) { return x(d.count); });
-		bar.exit().remove();
-
-		//update labels
-		var label = chart.selectAll('.label')
-			.data(data);
-		label.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return d.value; })
-		    .text(function (d) { return util.truncateText(d.value); });
-		label.enter()
-			.append('text')
-		  	.attr('class', 'label')
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return d.value; })
-		    .text(function (d) { return d.value; });
-		label.exit().remove();
-
-		//update counts
-		var count = chart.selectAll('.count')
-			.data(data);
-		count.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.enter()
-			.append('text')
-		  	.attr('class', 'count')
-		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.exit().remove();
-
-		//reset and initialize tooltips
-		$('[data-toggle="notooltip"]').tooltip('destroy');
-		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
-	}	
-	
 
 	function drawPieChart(data, dimensionObj, total, sampleObj){
 		var dimension = util.formatName(dimensionObj.name);
@@ -830,7 +725,8 @@ $(document).ready(function() {
 	var dimensions = [];
 	var isGAReady = false;
 
-	var timelineDimensions =  [{id:"yearMonth", name:"date.created", title:""}];
+	var timelineDimensions =  [{id:"", name:"date.created", title:"Number of reports published per month"},
+							   {id:"yearMonth", name:"", title:"Number of sessions for reports per month"}];
 
 	var genericDimensions =  [{id:"dimension6", name:"country", title:"Country"},
                  	          {id:"dimension8", name:"theme", title:"Theme"},
@@ -855,28 +751,34 @@ $(document).ready(function() {
                 	         ];
 
 
-    filters.init();
-    createCharts('.generic-container', genericDimensions);
-    createTimelineCharts();
-    getCharts();
 
+	filters.init();
+	$(document).on( "gaReady", init );
 
-	function createCharts(container, dimensions){
+	function init(){    
+	    createCharts('.generic-container', genericDimensions, 'General');
+	    createTimelineCharts();
+	    getCharts();
+	}
+
+	function createCharts(container, dimensions, type){
 		$(container).empty();
-		$(container).append('<h2>' + currentContentType + ' Data <span></span></h2>');
+		$(container).append('<h2>' + type + ' Data <span></span></h2>');
 		for (var i=0; i<dimensions.length; i++){
             $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
         }
 	}
 
 	function createTimelineCharts(){
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of reports published per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-content"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="citation">Source: ReliefWeb API. Not filtered by date created or date visited</p></div></div>');
-
-		$('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>Number of sessions for reports per month</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart timeline-sessions"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="citation">Source: Google Analytics API. Not filtered by date created or date visited</p></div></div>');
-
+		for (var i=0; i<timelineDimensions.length; i++){
+			var chart = (i==0) ? timelineDimensions[i].name : timelineDimensions[i].id;
+			var cite = (i==0) ? 'Source: ReliefWeb API.' : 'Source: Google Analytics API.';
+            $('.timeline-container').append('<div class="col-sm-6"><div class="chart-container"><h3><span>' + timelineDimensions[i].title + '</span><hr></h3><div class="chart-inner loading"><svg class="chart timeline-chart '+ util.formatName(chart) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><p class="citation">' + cite + ' Not filtered by date created or date visited</p></div></div>');
+        }
 	}
 
 	function getCharts(){
+		//set chart section titles
 		if (util.getMetric()=='sessions') $('.generic-container, .contenttype-container').find('h2 span').html('(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')');
 		$('.chart').parent().delay(0).queue(function(next){
 		    $(this).removeClass('nodata').addClass('loading');
@@ -899,7 +801,7 @@ $(document).ready(function() {
 					contentDimensions = reportsDimensions;
 			}
 			dimensions = $.merge( $.merge( [], genericDimensions ), contentDimensions );
-			createCharts('.contenttype-container', contentDimensions);
+			createCharts('.contenttype-container', contentDimensions, currentContentType);
 		}
 
 		//get data
@@ -914,7 +816,7 @@ $(document).ready(function() {
 
 		//get timeline data
 		rwapi.getData(timelineDimensions[0]);
-		if (isGAReady) gaapi.getData(timelineDimensions[0], 'timelineDataReady');
+		if (isGAReady) gaapi.getData(timelineDimensions[1], 'timelineDataReady');
 	}
 
 // +--------------------------------------------------------------+
@@ -923,30 +825,27 @@ $(document).ready(function() {
 // |                                                              |
 // +--------------------------------------------------------------+
 	$(document).on( "dataReady", function(e, result, dimensionObj, total, sampleObj) {
+		console.log('dataReady', dimensionObj.name);
 		//format dimension name
 		var dimension = util.formatName(dimensionObj.name);
 		var chart = $('.' + dimension);
 		chart.parent().stop(true).removeClass('nodata').removeClass('loading');
 
 		if (dimensionObj.name=='date.created'){
-			drawTimelineChart(result, 'content');
+			drawTimelineChart(result, dimensionObj.name);
 		}
 		else{
-			if (chart.children().length==0){
-		    	drawBarChart(result, dimensionObj, total, sampleObj);
-			}
-		    else{
-		    	updateBarChart(result, dimensionObj, total, sampleObj);
-		    }
+			drawBarChart(result, dimensionObj, total, sampleObj);
 		}
 	});
 	$(document).on( "gaReady", function(){
 		isGAReady = true;
 		//get timeline data
-		gaapi.getData(timelineDimensions[0], 'timelineDataReady');
+		gaapi.getData(timelineDimensions[1], 'timelineDataReady');
 	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
-		drawTimelineChart(result, 'sessions');
+		console.log('dataReady', dimensionObj.id);
+		drawTimelineChart(result, dimensionObj.id);
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
 		clearChart(dimensionObj, 'There is no data for this time period.');
@@ -965,9 +864,9 @@ $(document).ready(function() {
 	});
 
 	function clearChart(obj, msg){
-		var chart = '.' + util.formatName(obj.name);
-		var chartParent = $(chart).parent();
-		setChartTitle(chartParent.parent(), obj.title);
+		var chart = (obj.name=='') ? obj.id : obj.name;
+		var chartParent = $('.'+util.formatName(chart)).parent();
+		if (chart!='yearMonth' && chart!='date.created') setChartTitle(chartParent.parent(), obj.title);
 		chartParent.find('.nodata-msg').text(msg);
 		chartParent.parent().find('.citation').text('');
 		chartParent.stop(true).addClass('nodata').removeClass('loading');
@@ -1027,15 +926,16 @@ $(document).ready(function() {
 		y = d3.scale.ordinal()
 		    .rangeRoundBands([0, (barHeight+barMargin) * data.length]);
 
-		if (util.getMetric()=="sessions"){
+		//set color scale by metric
+		if (util.getMetric()=='sessions'){
 			var color = d3.scale.linear()
   				.domain([0, d3.max(data, function(d) { return d.count; })])
-  				.range(["#EEE3FC", "#B490E3"]);
+  				.range(['#EEE3FC', '#B490E3']);
 		}
 		else{
 			var color = d3.scale.linear()
   				.domain([0, d3.max(data, function(d) { return d.count; })])
-  				.range(["#E8F4F5", "#0988BB"]);
+  				.range(['#E8F4F5', '#0988BB']);
 		}
 
 		//define chart
@@ -1043,157 +943,60 @@ $(document).ready(function() {
 		    .attr('width', width)
 		    .attr('height', (barHeight+barMargin) * data.length);
 
-		//add bars
-		var bar = chart.selectAll('rect')
+		var bar = chart.selectAll('g')
 		    .data(data)
-		  .enter().append('rect')
-		  	.attr('class', function(d) { return d.value; })
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return ((d.count/total)*100).toFixed(2) + '%'; })
-		    .attr('x', labelWidth+countWidth) 
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
+		    .enter().append('g')
+		    .attr('transform', function(d, i) {
+		      return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
+		    });
+
+		//add bars
+		bar.append('rect')
+		    .attr('fill', function(d) { return color(d.count); })
+		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
-			.attr('width', 0)
+		    .attr('width', 0)
 			.transition()
-	       	.duration(duration)
+	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
 
-		//add labels
-		var label = chart.selectAll('.label')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'label')
+		//add label
+		bar.append('text')
+		   	.attr('class', 'label')
 		  	.attr('data-toggle', 'tooltip')
 		  	.attr('title', function(d) { return d.value; })
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-		    .text(function (d) { return util.truncateText(d.value); });
+		    .attr('dy', labelY)
+		    .text(function(d) { return util.truncateText(d.value); });
 
-		//add counts
-		var count = chart.selectAll('.count')
-			.data(data)
-		  .enter().append('text')
-		  	.attr('class', 'count')
+		//add count
+		bar.append('text')
+		   	.attr('class', 'count')
 		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
+		    .attr('dy', labelY)
 		    .text(function(d) { return formatNum(d.count); });
 
 		//initialize tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}
+	   	
 
-	function updateBarChart(data, dimensionObj, total, sampleObj){
-		var dimension = util.formatName(dimensionObj.name);
-		var chartName = '.' + dimension;
-		var chartContainer = $(chartName).parent().parent();
-		setChartTitle(chartContainer, dimensionObj.title);
-		setCitation(chartContainer, sampleObj);
-
-		x.domain([0, d3.max(data, function(d) { return d.count; })]);
-		var chart = d3.select(chartName)
-		    .attr('height', (barHeight+barMargin) * data.length);
-
-		if (util.getMetric()=="sessions"){
-			var color = d3.scale.linear()
-  				.domain([0, d3.max(data, function(d) { return d.count; })])
-  				.range(["#EEE3FC", "#B490E3"]);
-		}
-		else{
-			var color = d3.scale.linear()
-  				.domain([0, d3.max(data, function(d) { return d.count; })])
-  				.range(["#E8F4F5", "#0988BB"]);
-		}
-
-		//update bars
-		var bar = chart.selectAll('rect')
-			.data(data);
-		bar.transition()
-			.duration(duration)
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('width', function(d) { return x(d.count); })
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { return ((d.count/total)*100).toFixed(2) + '%'; })
-		bar.enter()
-			.append('rect')
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return ((d.count/total)*100).toFixed(2) + '%'; })
-			.attr('x', labelWidth+countWidth) 
-	        .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-      		.style('fill', function(d) { return color(d.count); })
-			.attr('height', barHeight)
-	        .attr('width', 0) 
-			.transition()
-	   		.duration(duration)
-			.attr('width', function(d) { return x(d.count); });
-		bar.exit().remove();
-
-		//update labels
-		var label = chart.selectAll('.label')
-			.data(data);
-		label.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('data-original-title', function(d) { 
-		  		if (d.value=='Peru') return ' Peru '; //catch browser from converting color name to color hex
-		  		else return d.value; 
-		  	})
-		    .text(function (d) { return util.truncateText(d.value); });
-		label.enter()
-			.append('text')
-		  	.attr('class', 'label')
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return d.value; })
-		    .text(function (d) { return util.truncateText(d.value); });
-		label.exit().remove();
-
-		//update counts
-		var count = chart.selectAll('.count')
-			.data(data);
-		count.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.enter()
-			.append('text')
-		  	.attr('class', 'count')
-		  	.attr('x', labelWidth+15)
-		    .attr('y', function(d, i) { return (barHeight+barMargin)*i; })
-		  	.attr('dy', labelY)
-			.transition()
-			.duration(duration)
-		    .text(function(d) { return formatNum(d.count); });
-		count.exit().remove();
-
-		//reset and initialize tooltips
-		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
-	}	
-
-   	
-	function drawTimelineChart(data ,type){
-		//parse dates
+	function drawTimelineChart(data, dimension){
 		var parseDate = d3.time.format("%Y-%m-%d").parse,
     		formatValue = d3.format(","),
     		formatTooltipDate = d3.time.format("%b %Y"),
     		bisectDate = d3.bisector(function(d) { return d.value; }).left;
 
+		//parse dates
+		var tickArr = [];
 		for (var i=0;i<data.length;i++){
-			if (type=='sessions'){
-				var d = (data[i].value).substr(0, 4) + '-' + (data[i].value).substr(4, 2) + '-01';
-			}
-			else{
-				var d = (data[i].value).split('T')[0];
-			}
+			var d = (dimension=='yearMonth') ? (data[i].value).substr(0, 4) + '-' + (data[i].value).substr(4, 2) + '-01' : (data[i].value).split('T')[0];
 			data[i].value = parseDate(d);
+			tickArr.push(data[i].value);
 		}
 
-		var chartName = '.timeline-'+type;
+		var chartName = '.'+util.formatName(dimension);
 		var chartContainer = $(chartName).parent().parent();
-		var title = (type=='content') ? 'Number of ' + filters.filterParams.content_type + ' published per month' :'Number of sessions for ' + filters.filterParams.content_type + ' per month';
+		var title = (dimension=='yearMonth') ? 'Number of sessions for ' + filters.filterParams.content_type + ' per month' : 'Number of ' + filters.filterParams.content_type + ' published per month';
 		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
 
@@ -1221,14 +1024,17 @@ $(document).ready(function() {
     		.tickPadding(10)
     		.ticks(9)
 		    .tickFormat(d3.time.format("%b %y"));
+			if (data.length<9)
+				xAxis.tickValues(tickArr);
 
 		var yAxis = d3.svg.axis().scale(y)
 		    .orient("left")
 		    .innerTickSize(-width)
 		    .outerTickSize(-width)
 		    .tickPadding(10)
-		    .ticks(5)
-		    .tickFormat(d3.format("s"));
+		    .ticks(5);
+			if (max>1000)
+		   		yAxis.tickFormat(d3.format("s"));
 
     	var area = d3.svg.area()
 	    	.x(function(d) { return x(d.value); })
@@ -1243,7 +1049,6 @@ $(document).ready(function() {
 		    .attr("width", width + margin.left + margin.right)
 		    .attr("height", height + margin.top + margin.bottom).append("g")
 		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
 		var div = chart.append("div")	
     		.attr("class", "tooltip")				
@@ -1427,6 +1232,7 @@ $(document).ready(function() {
 
 
     authorize: function(event){ 
+      console.log('GA authorize', Math.floor(Date.now() / 1000));
       var pHeader = {'alg':'RS256','typ':'JWT'};
       var sHeader = JSON.stringify(pHeader);
       var pClaim = {};
@@ -1457,6 +1263,7 @@ $(document).ready(function() {
               'token_type': 'Bearer'
             }
           });
+          console.log('GA ready', Math.floor(Date.now() / 1000));
           $(document).trigger('gaReady');
       });
 
@@ -1472,6 +1279,7 @@ $(document).ready(function() {
 
 
     getData: function(dimensionObj, eventCallback, pageSize){
+      console.log('getGAData',dimensionObj.id);
       eventCallback = (eventCallback==undefined) ? 'dataReady' : eventCallback;
       pageSize = (pageSize==undefined) ? 10000 : pageSize;
       gaapi.loadCount++;
@@ -1569,6 +1377,7 @@ $(document).ready(function() {
               gaapi.parseData(formattedJson, dimensionObj, eventCallback);
             })
             .then(null, function(err) {
+              console.log(err);
               var errorMsg = err.result.error.message;
               $(document).trigger("error", [dimensionObj, errorMsg] );
             });
@@ -5064,6 +4873,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 	var rwapi = window.rwapi = {
 
 		getData: function(dimensionObj){
+			console.log('getRWData',dimensionObj.name);
 			var filterParams = filters.filterParams;
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
@@ -5134,8 +4944,21 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			for (var i=0; i<d.length; i++) {
 				var item = d[i];
 				total = total + Number(item.count);
-				//if (dimensionObj.name=='date.created') console.log(d.length, item.value, item.count);
 				result.push({id: i, value: item.value, count: item.count });
+			}
+
+			//format experience data for jobs 
+			if (dimensionObj.name=='experience'){
+				var tmp = [];
+				for (var i=0; i<filters.jobsExperienceID.length; i++) {
+					for (var j=0; j<result.length; j++) {
+						if (filters.jobsExperienceID[i]==result[j].value){
+							tmp.push(result[j]);
+							break;
+						}
+					}
+				}
+				result = tmp;
 			}
 
 			//send data ready event
