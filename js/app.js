@@ -29,18 +29,20 @@ var Util = function() {
 			var is_mobile = ($('.mobile-only').is(':visible')) ? true : false;
 			return is_mobile;
 		},
-		truncateText: function(value){
-			var trunc = $('<div class="truncate">' + value + '</div>').appendTo('body');
-	    	var orig = trunc.clone().css({display: 'inline', width: 'auto', visibility: 'hidden'}).appendTo('body');
-	    	var str = trunc.renderedText();
-	    	var lastChar = str.slice(-1);
-	    	if (lastChar==" "){
-	    		str = str.substring(0, str.length - 1);
-	    	}
-	    	var val = ($(trunc).width() < $(orig).width()) ? str+'...' : str;
-	    	trunc.remove();
-	    	orig.remove();
-	    	return val;
+		truncateText: function(value, limit){
+			// var trunc = $('<div class="truncate">' + value + '</div>').appendTo('body');
+			// var orig = trunc.clone().css({display: 'inline', width: 'auto', visibility: 'hidden'}).appendTo('body');
+			// var str = trunc.renderedText();
+			// var lastChar = str.slice(-1);
+			// if (lastChar==" "){
+			// 		str = str.substring(0, str.length - 1);
+			// }
+			// var val = ($(trunc).width() < $(orig).width()) ? str+'...' : str;
+			// trunc.remove();
+			// orig.remove();
+			// return val;
+	  		var str = (value.length>limit) ? value.substring(0,limit) + '...' : value;
+	  		return str;
 		},
 		roundNearest: function(num){
 			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
@@ -360,7 +362,7 @@ $(document).ready(initUtil);
         		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
             	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
         	}
-            
+
   			//send the apply filters event
             filters.applyFilters();
 
@@ -514,6 +516,7 @@ $(document).ready(function() {
                 	     ];
     var loadInterval;
     var intervalDelay = 1000;
+    var truncLimit = 22;
 
 
 	$(document).on( "gaReady", userDataInit );
@@ -538,6 +541,23 @@ $(document).ready(function() {
 		$(document).on( "applyFilters", function(e) {
 			loadInterval = setInterval(checkGALoad, intervalDelay);
 		});	
+
+		var w = $('body').width();
+	    if (w<=1024){
+	    	truncLimit = 16;
+	    }
+	    else if (w<768){
+
+	    }
+	    else if (w<414){
+
+	    }
+	    else if (w<300){
+
+	    }
+	    else{
+	    	truncLimit = 22;
+	    }
 	}
 
 	function checkGALoad(){
@@ -550,7 +570,6 @@ $(document).ready(function() {
 	}
 
 	function createCharts(container, dimensions){
-		//$(container).empty();
 		$(container).append('<h2>User Data</h2>');
 		for (var i=0; i<dimensions.length; i++){
             $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
@@ -614,15 +633,21 @@ $(document).ready(function() {
 		    .attr('width', width)
 		    .attr('height', (barHeight+barMargin) * data.length);
 
-		var bar = chart.selectAll('g')
-		    .data(data)
-		    .enter().append('g')
+		var bar = chart.selectAll('g').data(data);
+		var barEnter = bar.enter().append('g')
 		    .attr('transform', function(d, i) {
-		      return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
+		     	return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
 		    });
 
-		//add bars
-		bar.append('rect')
+		//append elements
+		barEnter.append('rect');
+		barEnter.append('text')
+		   	.attr('class', 'label');
+		barEnter.append('text')
+		   	.attr('class', 'count');
+
+		//update selections
+		bar.select('rect')
 		    .attr('fill', function(d) { return color(d.count); })
 		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
@@ -631,20 +656,21 @@ $(document).ready(function() {
 	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
 
-		//add label
-		bar.append('text')
+		bar.select('.label')
 		   	.attr('class', 'label')
 		  	.attr('data-toggle', 'tooltip')
 		  	.attr('title', function(d) { return d.value; })
 		    .attr('dy', labelY)
-		    .text(function(d) { return util.truncateText(d.value); });
+		    .text(function(d) { return util.truncateText(d.value, truncLimit); });
 
-		//add count
-		bar.append('text')
+		bar.select('.count')
 		   	.attr('class', 'count')
 		  	.attr('x', labelWidth+15)
 		    .attr('dy', labelY)
 		    .text(function(d) { return formatNum(d.count); });
+
+		//exit
+		bar.exit().remove();
 
 		//initialize tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
@@ -724,9 +750,11 @@ $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
 	var isGAReady = false;
+	var truncLimit = 22;
 
-	var timelineDimensions =  [{id:"", name:"date.created", title:"Number of reports published per month"},
-							   {id:"yearMonth", name:"", title:"Number of sessions for reports per month"}];
+	var timelineDimensions = [{id:"", name:"date.created", title:"Number of reports published per month"},
+							  {id:"yearMonth", name:"", title:"Number of sessions for reports per month"}
+							 ];
 
 	var genericDimensions =  [{id:"dimension6", name:"country", title:"Country"},
                  	          {id:"dimension8", name:"theme", title:"Theme"},
@@ -759,6 +787,23 @@ $(document).ready(function() {
 	    createCharts('.generic-container', genericDimensions, 'General');
 	    createTimelineCharts();
 	    getCharts();
+
+	    var w = $('body').width();
+	    if (w<=1024){
+	    	truncLimit = 16;
+	    }
+	    else if (w<768){
+
+	    }
+	    else if (w<414){
+
+	    }
+	    else if (w<300){
+
+	    }
+	    else{
+	    	truncLimit = 22;
+	    }
 	}
 
 	function createCharts(container, dimensions, type){
@@ -943,15 +988,21 @@ $(document).ready(function() {
 		    .attr('width', width)
 		    .attr('height', (barHeight+barMargin) * data.length);
 
-		var bar = chart.selectAll('g')
-		    .data(data)
-		    .enter().append('g')
+		var bar = chart.selectAll('g').data(data);
+		var barEnter = bar.enter().append('g')
 		    .attr('transform', function(d, i) {
-		      return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
+		    	return 'translate(0,' + ((barHeight+barMargin)*i) + ')';
 		    });
 
-		//add bars
-		bar.append('rect')
+		//append elements
+		barEnter.append('rect');
+		barEnter.append('text')
+		   	.attr('class', 'label');
+		barEnter.append('text')
+		   	.attr('class', 'count');
+
+		//update selections
+		bar.select('rect')
 		    .attr('fill', function(d) { return color(d.count); })
 		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
@@ -960,20 +1011,21 @@ $(document).ready(function() {
 	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
 
-		//add label
-		bar.append('text')
+		bar.select('.label')
 		   	.attr('class', 'label')
 		  	.attr('data-toggle', 'tooltip')
 		  	.attr('title', function(d) { return d.value; })
 		    .attr('dy', labelY)
-		    .text(function(d) { return util.truncateText(d.value); });
+		    .text(function(d) { return util.truncateText(d.value ,truncLimit); });
 
-		//add count
-		bar.append('text')
+		bar.select('.count')
 		   	.attr('class', 'count')
 		  	.attr('x', labelWidth+15)
 		    .attr('dy', labelY)
 		    .text(function(d) { return formatNum(d.count); });
+
+		//exit
+		bar.exit().remove();
 
 		//initialize tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
@@ -1000,9 +1052,9 @@ $(document).ready(function() {
 		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
 
-		var margin = {left: 35, top: 10, right: 20, bottom: 45};
-		var width = $('.chart-container').width() - margin.left - margin.right;
-		var height = $(chartName).parent().height() - margin.top - margin.bottom;
+		var margin = {left: 35, top: 10, right: 20, bottom: 45},
+			width = $('.chart-container').width() - margin.left - margin.right,
+			height = $(chartName).parent().height() - margin.top - margin.bottom;
 
 		if ($(chartName).children().length>0){
 			d3.select(chartName).selectAll("svg > *").remove();
@@ -1093,9 +1145,6 @@ $(document).ready(function() {
 		//init tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}
-
-
-
 
 	// $(window).resize(resizeCharts);
 	//    function resizeCharts(){
@@ -1346,7 +1395,7 @@ $(document).ready(function() {
             //     "dimensionFilterClauses": filter
             //   }]
             // };
-            // if (dimensionObj.id=="yearMonth") console.table(JSON.stringify(query));
+            // if (dimensionObj.id=="dimension8") console.table(JSON.stringify(query));
 
             gapi.client.analyticsreporting.reports.batchGet( {
               "quotaUser": gaapi.QUOTA_ID,
@@ -4916,7 +4965,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			}
 			var rwQuery = { "facets": facets };
 
-			//if (dimension=="country") console.log(JSON.stringify(rwQuery));
+			//if (dimension=="theme") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
 			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
