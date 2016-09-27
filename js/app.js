@@ -1482,6 +1482,20 @@ $(document).ready(function() {
         result.sort(gaapi.sortByCount);
       }
 
+      //format experience data for jobs 
+      if (dimensionObj.id=='dimension16'){
+        var tmp = [];
+        for (var i=0; i<filters.jobsExperienceID.length; i++) {
+          for (var j=0; j<result.length; j++) {
+            if (filters.jobsExperienceID[i]==result[j].value){
+              tmp.push(result[j]);
+              break;
+            }
+          }
+        }
+        result = tmp;
+      }
+
       //send data ready event
       gaapi.loadCount--;
       //console.log(gaapi.loadCount);
