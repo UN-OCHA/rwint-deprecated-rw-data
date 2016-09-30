@@ -41,8 +41,14 @@ var Util = function() {
 			// trunc.remove();
 			// orig.remove();
 			// return val;
-	  		var str = (value.length>limit) ? value.substring(0,limit) + '...' : value;
-	  		return str;
+
+
+			if (value.length > limit) {
+				value = value.substring(0, limit + 1);
+				value = value.substring(0, Math.min(value.length, value.lastIndexOf(' ')));
+				value = value + '...';
+			}
+			return value;
 		},
 		roundNearest: function(num){
 			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
@@ -543,20 +549,20 @@ $(document).ready(function() {
 		});	
 
 		var w = $('body').width();
-	    if (w<=1024){
+	    if (w>=1280){
+	    	truncLimit = 22;
+	    }
+	    else if (w>=768){
 	    	truncLimit = 16;
 	    }
-	    else if (w<768){
-
+	    else if (w>=667){
+	    	truncLimit = 38;
 	    }
-	    else if (w<414){
-
-	    }
-	    else if (w<300){
-
+	    else if (w>370){
+	    	truncLimit = 14;
 	    }
 	    else{
-	    	truncLimit = 22;
+	    	truncLimit = 8;
 	    }
 	}
 
@@ -579,6 +585,7 @@ $(document).ready(function() {
 	function getUserCharts(){
 		$('.user-chart').parent().removeClass('nodata').addClass('loading');
 		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
+		$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($('.chart-container'));
 		for (var i=0; i<userDimensions.length; i++){
 			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
 		}
@@ -593,6 +600,39 @@ $(document).ready(function() {
 			element.append('<p class="citation">' + citation + '</p>');
 		}
 	}
+
+	function exportData(name, dataset) {
+      var rows = [], row, item, data, values;
+      var category = (util.getMetric()=='sessions') ? util.getMetric() : filters.filterParams.content_type;
+
+	  // var uri = new URI(); 
+	  // var query = uri.query();
+
+      // Column labels.
+      rows.push(['Number of sessions for ' + category + ' by ' + name].concat('Count'));
+ 
+      // Data rows.
+      for (var property in dataset) {
+        if (dataset.hasOwnProperty(property)){
+          row = [];
+          item = dataset[property];
+          data = item.count;
+          values = {};
+
+          row.push(item.value);
+          for (var i = 0, l = data.length; i < l; i++) {
+            if (data[i]) {
+              values[data[i][0]] = data[i][1];
+            }
+          }
+          row.push(item.count);
+          rows.push(row);
+        }
+      }
+
+      // Export data.
+      ExportData.export(name, rows);
+    }
 
 	//define chart variables
 	var barHeight = 20,
@@ -618,6 +658,12 @@ $(document).ready(function() {
 		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		
 		setCitation($(chartName).parent().parent(), sampleObj);
+
+		//set download data action
+		$(chartName).parent().parent().find('a.download-tooltip').click(function(e) {
+      		e.preventDefault();
+      		exportData(dimensionObj.title, data);
+        });
 	
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -688,6 +734,13 @@ $(document).ready(function() {
 			$('[data-toggle="tooltip"]').tooltip('destroy');
 		}
 
+		//set download data action
+		$(chartName).parent().parent().find('a.download-tooltip').click(function(e) {
+      		e.preventDefault();
+      		exportData(dimensionObj.title, data);
+        });
+	
+
 		var w = $('.chart-inner').width(),
 	    	h = $('.chart-inner').height(),
 	    	radius = (w<h) ? w/2 : h/2;
@@ -746,6 +799,218 @@ $(document).ready(function() {
 	}
 });
 
+/* Blob.js
+ * A Blob implementation.
+ * 2014-07-24
+ *
+ * By Eli Grey, http://eligrey.com
+ * By Devin Samarin, https://github.com/dsamarin
+ * License: X11/MIT
+ *   See https://github.com/eligrey/Blob.js/blob/master/LICENSE.md
+ */
+
+/*global self, unescape */
+/*jslint bitwise: true, regexp: true, confusion: true, es5: true, vars: true, white: true,
+  plusplus: true */
+
+/*! @source http://purl.eligrey.com/github/Blob.js/blob/master/Blob.js */
+
+(function (view) {
+	"use strict";
+
+	view.URL = view.URL || view.webkitURL;
+
+	if (view.Blob && view.URL) {
+		try {
+			new Blob;
+			return;
+		} catch (e) {}
+	}
+
+	// Internally we use a BlobBuilder implementation to base Blob off of
+	// in order to support older browsers that only have BlobBuilder
+	var BlobBuilder = view.BlobBuilder || view.WebKitBlobBuilder || view.MozBlobBuilder || (function(view) {
+		var
+			  get_class = function(object) {
+				return Object.prototype.toString.call(object).match(/^\[object\s(.*)\]$/)[1];
+			}
+			, FakeBlobBuilder = function BlobBuilder() {
+				this.data = [];
+			}
+			, FakeBlob = function Blob(data, type, encoding) {
+				this.data = data;
+				this.size = data.length;
+				this.type = type;
+				this.encoding = encoding;
+			}
+			, FBB_proto = FakeBlobBuilder.prototype
+			, FB_proto = FakeBlob.prototype
+			, FileReaderSync = view.FileReaderSync
+			, FileException = function(type) {
+				this.code = this[this.name = type];
+			}
+			, file_ex_codes = (
+				  "NOT_FOUND_ERR SECURITY_ERR ABORT_ERR NOT_READABLE_ERR ENCODING_ERR "
+				+ "NO_MODIFICATION_ALLOWED_ERR INVALID_STATE_ERR SYNTAX_ERR"
+			).split(" ")
+			, file_ex_code = file_ex_codes.length
+			, real_URL = view.URL || view.webkitURL || view
+			, real_create_object_URL = real_URL.createObjectURL
+			, real_revoke_object_URL = real_URL.revokeObjectURL
+			, URL = real_URL
+			, btoa = view.btoa
+			, atob = view.atob
+
+			, ArrayBuffer = view.ArrayBuffer
+			, Uint8Array = view.Uint8Array
+
+			, origin = /^[\w-]+:\/*\[?[\w\.:-]+\]?(?::[0-9]+)?/
+		;
+		FakeBlob.fake = FB_proto.fake = true;
+		while (file_ex_code--) {
+			FileException.prototype[file_ex_codes[file_ex_code]] = file_ex_code + 1;
+		}
+		// Polyfill URL
+		if (!real_URL.createObjectURL) {
+			URL = view.URL = function(uri) {
+				var
+					  uri_info = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+					, uri_origin
+				;
+				uri_info.href = uri;
+				if (!("origin" in uri_info)) {
+					if (uri_info.protocol.toLowerCase() === "data:") {
+						uri_info.origin = null;
+					} else {
+						uri_origin = uri.match(origin);
+						uri_info.origin = uri_origin && uri_origin[1];
+					}
+				}
+				return uri_info;
+			};
+		}
+		URL.createObjectURL = function(blob) {
+			var
+				  type = blob.type
+				, data_URI_header
+			;
+			if (type === null) {
+				type = "application/octet-stream";
+			}
+			if (blob instanceof FakeBlob) {
+				data_URI_header = "data:" + type;
+				if (blob.encoding === "base64") {
+					return data_URI_header + ";base64," + blob.data;
+				} else if (blob.encoding === "URI") {
+					return data_URI_header + "," + decodeURIComponent(blob.data);
+				} if (btoa) {
+					return data_URI_header + ";base64," + btoa(blob.data);
+				} else {
+					return data_URI_header + "," + encodeURIComponent(blob.data);
+				}
+			} else if (real_create_object_URL) {
+				return real_create_object_URL.call(real_URL, blob);
+			}
+		};
+		URL.revokeObjectURL = function(object_URL) {
+			if (object_URL.substring(0, 5) !== "data:" && real_revoke_object_URL) {
+				real_revoke_object_URL.call(real_URL, object_URL);
+			}
+		};
+		FBB_proto.append = function(data/*, endings*/) {
+			var bb = this.data;
+			// decode data to a binary string
+			if (Uint8Array && (data instanceof ArrayBuffer || data instanceof Uint8Array)) {
+				var
+					  str = ""
+					, buf = new Uint8Array(data)
+					, i = 0
+					, buf_len = buf.length
+				;
+				for (; i < buf_len; i++) {
+					str += String.fromCharCode(buf[i]);
+				}
+				bb.push(str);
+			} else if (get_class(data) === "Blob" || get_class(data) === "File") {
+				if (FileReaderSync) {
+					var fr = new FileReaderSync;
+					bb.push(fr.readAsBinaryString(data));
+				} else {
+					// async FileReader won't work as BlobBuilder is sync
+					throw new FileException("NOT_READABLE_ERR");
+				}
+			} else if (data instanceof FakeBlob) {
+				if (data.encoding === "base64" && atob) {
+					bb.push(atob(data.data));
+				} else if (data.encoding === "URI") {
+					bb.push(decodeURIComponent(data.data));
+				} else if (data.encoding === "raw") {
+					bb.push(data.data);
+				}
+			} else {
+				if (typeof data !== "string") {
+					data += ""; // convert unsupported types to strings
+				}
+				// decode UTF-16 to binary string
+				bb.push(unescape(encodeURIComponent(data)));
+			}
+		};
+		FBB_proto.getBlob = function(type) {
+			if (!arguments.length) {
+				type = null;
+			}
+			return new FakeBlob(this.data.join(""), type, "raw");
+		};
+		FBB_proto.toString = function() {
+			return "[object BlobBuilder]";
+		};
+		FB_proto.slice = function(start, end, type) {
+			var args = arguments.length;
+			if (args < 3) {
+				type = null;
+			}
+			return new FakeBlob(
+				  this.data.slice(start, args > 1 ? end : this.data.length)
+				, type
+				, this.encoding
+			);
+		};
+		FB_proto.toString = function() {
+			return "[object Blob]";
+		};
+		FB_proto.close = function() {
+			this.size = 0;
+			delete this.data;
+		};
+		return FakeBlobBuilder;
+	}(view));
+
+	view.Blob = function(blobParts, options) {
+		var type = options ? (options.type || "") : "";
+		var builder = new BlobBuilder();
+		if (blobParts) {
+			for (var i = 0, len = blobParts.length; i < len; i++) {
+				if (Uint8Array && blobParts[i] instanceof Uint8Array) {
+					builder.append(blobParts[i].buffer);
+				}
+				else {
+					builder.append(blobParts[i]);
+				}
+			}
+		}
+		var blob = builder.getBlob(type);
+		if (!blob.slice && blob.webkitSlice) {
+			blob.slice = blob.webkitSlice;
+		}
+		return blob;
+	};
+
+	var getPrototypeOf = Object.getPrototypeOf || function(object) {
+		return object.__proto__;
+	};
+	view.Blob.prototype = getPrototypeOf(new view.Blob());
+}(typeof self !== "undefined" && self || typeof window !== "undefined" && window || this.content || this));
+
 $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
@@ -789,21 +1054,22 @@ $(document).ready(function() {
 	    getCharts();
 
 	    var w = $('body').width();
-	    if (w<=1024){
-	    	truncLimit = 16;
-	    }
-	    else if (w<768){
-
-	    }
-	    else if (w<414){
-
-	    }
-	    else if (w<300){
-
-	    }
-	    else{
+	    if (w>=1280){
 	    	truncLimit = 22;
 	    }
+	    else if (w>=768){
+	    	truncLimit = 16;
+	    }
+	    else if (w>=667){
+	    	truncLimit = 38;
+	    }
+	    else if (w>370){
+	    	truncLimit = 14;
+	    }
+	    else{
+	    	truncLimit = 8;
+	    }
+	    console.log(w, truncLimit);
 	}
 
 	function createCharts(container, dimensions, type){
@@ -847,6 +1113,9 @@ $(document).ready(function() {
 			}
 			dimensions = $.merge( $.merge( [], genericDimensions ), contentDimensions );
 			createCharts('.contenttype-container', contentDimensions, currentContentType);
+
+			//create export links
+			$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($('.chart-container'));
 		}
 
 		//get data
@@ -935,6 +1204,39 @@ $(document).ready(function() {
 			chart.append('<p class="citation">' + citation + '</p>');
 		}
 	}
+
+	function exportData(name, dataset) {
+      var rows = [], row, item, data, values;
+      var category = (util.getMetric()=='sessions') ? util.getMetric() : filters.filterParams.content_type;
+
+	  // var uri = new URI(); 
+	  // var query = uri.query();
+
+      // Column labels.
+      rows.push(['Number of ' + category + ' by ' + name].concat('Count'));
+ 
+      // Data rows.
+      for (var property in dataset) {
+        if (dataset.hasOwnProperty(property)){
+          row = [];
+          item = dataset[property];
+          data = item.count;
+          values = {};
+
+          row.push(item.value);
+          for (var i = 0, l = data.length; i < l; i++) {
+            if (data[i]) {
+              values[data[i][0]] = data[i][1];
+            }
+          }
+          row.push(item.count);
+          rows.push(row);
+        }
+      }
+
+      // Export data.
+      ExportData.export(name, rows);
+    }
 	
 
 // +--------------------------------------------------------------+
@@ -945,7 +1247,7 @@ $(document).ready(function() {
 	//define chart variables
 	var barHeight = 20,
 		barMargin = 25,
-		duration = 500,
+		duration = 2000,
 		scrollbarWidth = 25,
 		countWidth = 20,
 		charLimit = (util.isMobile()) ? 15 : 22,
@@ -965,6 +1267,12 @@ $(document).ready(function() {
 		var chartContainer = $(chartName).parent().parent();
 		setChartTitle(chartContainer, dimensionObj.title);
 		setCitation(chartContainer, sampleObj);
+
+		//set download data action
+		$(chartContainer).find('a.download-tooltip').click(function(e) {
+      		e.preventDefault();
+      		exportData(dimensionObj.title, data);
+        });
 
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -998,6 +1306,9 @@ $(document).ready(function() {
 		barEnter.append('rect');
 		barEnter.append('text')
 		   	.attr('class', 'label');
+		// barEnter.append('foreignObject')
+		// 	.append('xhtml:div')
+		// 	.attr('class', 'truncate');
 		barEnter.append('text')
 		   	.attr('class', 'count');
 
@@ -1006,7 +1317,7 @@ $(document).ready(function() {
 		    .attr('fill', function(d) { return color(d.count); })
 		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
-		    .attr('width', 0)
+		    //.attr('width', 0)
 			.transition()
 	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
@@ -1017,6 +1328,15 @@ $(document).ready(function() {
 		  	.attr('title', function(d) { return d.value; })
 		    .attr('dy', labelY)
 		    .text(function(d) { return util.truncateText(d.value ,truncLimit); });
+
+		// bar.select('foreignObject')
+  //           .attr({
+  //           	'x': 0,
+  //               'y': 3
+  //           })
+  //           .select('.truncate')
+  //           	.attr('class', 'truncate')
+  //           	.html(function(d) { return d.value; });
 
 		bar.select('.count')
 		   	.attr('class', 'count')
@@ -1051,6 +1371,12 @@ $(document).ready(function() {
 		var title = (dimension=='yearMonth') ? 'Number of sessions for ' + filters.filterParams.content_type + ' per month' : 'Number of ' + filters.filterParams.content_type + ' published per month';
 		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
+
+		//set download data action
+		$(chartContainer).find('a.download-tooltip').click(function(e) {
+      		e.preventDefault();
+      		exportData('month', data);
+        });
 
 		var margin = {left: 35, top: 10, right: 20, bottom: 45},
 			width = $('.chart-container').width() - margin.left - margin.right,
@@ -1170,6 +1496,37 @@ $(document).ready(function() {
 	}
 
 });
+
+if (!window.ExportData) {
+  window.ExportData = {
+    mimetypes: {
+      'csv': 'text/csv'
+    },
+
+    quote: function (data) {
+      if (typeof data === 'string' && (data.indexOf(',') !== -1 || data.indexOf('"') !== -1)) {
+        return '"' + data.replace('"', '""') + '"';
+      }
+      return data;
+    },
+
+    export: function (name, data) {
+      var csv = [], type = 'csv';
+
+      for (var r = 0, rl = data.length; r < rl; r++) {
+        var row = data[r].slice();
+
+        for (var c = 0, cl = row.length; c < cl; c++) {
+          row[c] = this.quote(row[c]);
+        }
+        csv.push(row.join(','));
+      }
+
+      var filename = name.toLowerCase().replace(/\s+/, '-') + '.' + type;
+      saveAs(new Blob([csv.join("\n")], {type:this.mimetypes[type] + ';charset=utf-8'}), filename);
+    }
+  }
+}
 
 // $(document).ready(function() {
 
@@ -4932,6 +5289,522 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 	window.getLanguageName = getLanguageName;
 	window.getLanguageNativeName = getLanguageNativeName;
 })();
+(function () {
+
+  if (!window.sections) {
+    window.sections = {};
+  }
+
+  window.sections.map = function (id) {
+    // Export data as CSV.
+    function exportData() {
+      var rows = [], country, row;
+
+      // Labels.
+      rows.push(["country", "iso3"].concat(resources));
+
+      // Country data.
+      for (var i = 0, l = countryList.length; i < l; i++) {
+        country = countryList[i];
+        row = [country.name, country.iso3];
+
+        for (var j = 0, m = resources.length; j < m; j++) {
+          var stat = stats[resources[j]];
+          row.push(stat ? stat.countries[country.iso3] || 0 : 0);
+        }
+        rows.push(row);
+      }
+
+      ExportData.export('country-overview-' + getSelectedYear(), rows);
+    }
+
+    // Display the tooltip popup when hovering a country.
+    function showLabel() {
+      var target = d3.select(d3.event.target);
+      if (target.classed('country')) {
+        var data = target.datum().properties,
+            name = data.name,
+            iso3 = data.iso3,
+            values = resources.map(function (i) {
+              return '<i class="icon-' + i + '"></i>' + formatter(stats[i].getValue(iso3));
+            }).join('');
+
+        label.style('display', 'block')
+            .html('<span class="name">' + name + '</span>' + values);
+      }
+      else {
+        hideLabel();
+      }
+    }
+
+    // Hide the country tooltip.
+    function hideLabel() {
+      label.style('display', 'none');
+    }
+
+    // Move the currently displayed tooltip when the mouse moves.
+    function moveLabel() {
+      var position = d3.mouse(container.node()),
+          x = position[0],
+          y = position[1],
+          w = parseInt(label.style('width')),
+          right = (x > parseInt(container.style('width')) / 2);
+
+      label.classed('left', right).classed('right', !right)
+          .style({
+            'top': (y - 16) + 'px',
+            'left': (right ? x - 32 - w : x + 16) + 'px'
+          });
+    }
+
+    // Add a year selector for the displayed data.
+    function addYearSelector() {
+      var control = layerControl.select('.top.right').append('div')
+          .attr('class', 'control year selector');
+
+      control.append('span')
+          .html('Year ');
+
+      control.append('select')
+          .on('change', function () {
+            loadData(parseInt(this.value));
+          })
+          .html(d3.range(startingYear, currentYear).reverse().map(function (year) {
+            return '<option value="' + year + '">' + year + '</option>';
+          }).join(''));
+    }
+
+    // Add a resource selector to change the displayed data.
+    function addResourceSelector() {
+      layerControl.select('.top.right').append('div')
+          .attr('class', 'control resource selector')
+          .html(resources.map(function(i) {
+            var checked = (i === activeResource ? ' checked="checked"' : '');
+            return '<input type="radio" name="selection" id="selector-' + i + '" value="' + i + '" ' + checked + '/>' +
+                   '<label for="selector-' + i + '"><i class="icon-' + i + '"></i>' + i + '</label>';
+          }).join('<br/>'))
+          .on('click', function() {
+            var target = d3.event.target;
+            if (target.name === 'selection') {
+              activeResource = target.value;
+              updateMap(true);
+            }
+          });
+    }
+
+    // Add the legend with the scale for the currently displayed data.
+    function addLegend() {
+      layerControl.select('.top.right').append('div')
+          .attr('class', 'control legend');
+    }
+
+    // Update the legend when the displayed data changes.
+    function updateLegend(resource) {
+      var color = getCurrentStats().color,
+          domain = color.domain().slice(0);
+
+      if (!domain.length) {
+        domain.unshift(1);
+      }
+      else if (domain[0] !== 1) {
+        domain.unshift(0);
+      }
+
+      var html = domain.map(function (v, i) {
+            var v2 = domain[i + 1];
+            return '<i style="background:' + color(v) + '"></i>' +
+                (!v2 ? (v < 10 ? v : v + 1) + '+' : (v + 1 === v2 ? v : v + 1 + '-' + v2));
+          }).join('<br/>');
+
+      layerControl.select('.control.legend').html(html);
+    }
+
+    // Add Export Data link.
+    function addExport() {
+      var control = layerControl.select('.top.right').append('div')
+          .attr('class', 'control export');
+
+      control.append('h5').html('Data for ' + (currentYear - 1));
+      control.append('span').html('Download: ');
+      control.append('a').attr('href', '#').html('CSV')
+        .on('click', function () {
+          exportData();
+          d3.event.preventDefault();
+        });
+    }
+
+    // Update the Export Data control.
+    function updateExport() {
+      layerControl.select('.control.export h5').html('Data for ' + getSelectedYear());
+    }
+
+    // Add the zoom control.
+    function addZoom() {
+      var control = layerControl.select('.top.left').append('div')
+          .attr('class', 'control zoom');
+
+      control.append('a')
+          .attr('class', 'zoom-in')
+          .html('+')
+          .on('click', function () { handleZoom(0, 0, 2); });
+
+      control.append('a')
+          .attr('class', 'zoom-out')
+          .html('-')
+          .on('click', function () { handleZoom(0, 0, 0.5); });
+    }
+
+    // Create the zoom controller.
+    function createZoom(bbox, width, height) {
+      var matrix = [1, 0, 0, 1, 0, 0],
+          ctm = svgContainer.node().getScreenCTM(),
+          container = svgContainer.node(),
+          w = d3.select(window),
+          focus = d3.select('.focus').node();
+
+      // For performance, store and recalculate the current
+      // transformation matrix only when the window is resized.
+      function resize() {
+        ctm = svgContainer.node().getScreenCTM();
+      }
+
+      w.on({'resize': resize, 'scroll': resize});
+
+      // Convert coordinates.
+      function convert(x, y, inverse) {
+        var point = container.createSVGPoint();
+        point.x = x; point.y = y;
+        point = point.matrixTransform(inverse ? ctm.inverse() : ctm);
+        return [point.x, point.y];
+      }
+
+      // Get the mouse coordinates.
+      function mouse() {
+        var event = d3.event;
+        return convert(event.clientX, event.clientY, true);
+      }
+
+      // Update the SVG with the new position and zoom.
+      function update(dx, dy, scale) {
+        pan(dx, dy);
+        zoom(scale);
+        svg.attr('transform', 'matrix(' + matrix.join(' ') + ')');
+      }
+
+      // Move the SVG.
+      function pan(dx, dy) {
+        matrix[4] += dx ? width / 2 - dx : 0;
+        matrix[5] += dy ? height / 2 - dy : 0;
+      }
+
+      // Zoom the SVG.
+      function zoom(scale) {
+        if (scale) {
+          for (var i = 0, l = matrix.length; i < l; i++) {
+            matrix[i] *= scale;
+          }
+          pan(scale * width / 2, scale * height / 2);
+        }
+      }
+
+      // Zoom/unzoom when double clicking.
+      svgContainer.on('dblclick', function () {
+        var l = mouse();
+        update(l[0], l[1], d3.event.shiftKey ? 0.5 : 2);
+        d3.event.preventDefault();
+      });
+
+      // Handle moving the map.
+      svgContainer.on('mousedown', function () {
+        var origin = mouse();
+
+        function move() {
+          var l = mouse();
+          if (l[0] !== origin[0] || l[1] !== origin[1]) {
+            update(width / 2 + origin[0] - l[0], height / 2 + origin[1] - l[1]);
+            origin = l;
+          }
+          d3.event.preventDefault();
+        }
+
+        function stop() {
+          w.on('mousemove', null).on('mouseup', null);
+        }
+
+        w.on('mousemove', move).on('mouseup', stop);
+        d3.event.preventDefault();
+      });
+
+      // Calculate the initial center.
+      var b = bbox,
+          c = [(b[2] + b[0]) / 2, (b[3] + b[1]) / 2],
+          s = 1 / Math.max((b[2] - b[0]) / width, (b[3] - b[1]) / height);
+
+      update(c[0], c[1], s.toFixed(1));
+
+      // Handle zooming map with an eventual center.
+      handleZoom = function (dx, dy, scale) {
+        if (dx && dy) {
+          scale *= matrix[0];
+          matrix = [1, 0, 0, 1, 0, 0];
+        }
+        update(dx, dy, scale);
+      };
+
+      // Handle moving the map.
+      handleTranslate = function(dx, dy) {
+        update(width / 2 - dx * matrix[0] / s, height / 2 - dy * matrix[0] / s);
+      };
+    }
+
+    // Draw the map.
+    function drawMap(world, boundaries) {
+      // Add the countries.
+      svg.append('g')
+          .attr('class', 'countries')
+        .selectAll('.country')
+          .data(topojson.feature(world, world.objects.layer1).features)
+        .enter().append('path')
+          .attr('class', function (d) { return 'country ' + d.properties.iso3; })
+          .attr('fill', '#fff')
+          .attr('d', path);
+
+      // Add the inner boundaries.
+      d3.keys(boundaries.objects).forEach(function (k) {
+        svg.append('path')
+          .datum(topojson.feature(boundaries, boundaries.objects[k]))
+          .attr('class', 'boundaries inner' + ['', ' dashed', ' dotted'][k])
+          .attr('d', path);
+      });
+
+      // Add outer boundaries.
+      svg.append('path')
+        .datum(topojson.mesh(world, world.objects.layer1, function (a, b) { return a === b; }))
+        .attr('class', 'boundaries outer')
+        .attr('d', path);
+
+      // Create the zoom handler, showing the entire map properly centered.
+      createZoom(world.bbox, width, height);
+
+      addZoom();
+      addYearSelector();
+      addResourceSelector();
+      addLegend();
+      addExport();
+    }
+
+    // Update statistics object.
+    function setStats(resource, data, color) {
+      var stat = stats[resource] = {},
+          countries = stat.countries = {},
+          facet = data.embedded.facets.country || {},
+          items = facet.data || [],
+          max = 0,
+          item, count, i, l;
+
+      for (var i = 0, l = items.length; i < l; i++) {
+        item = items[i];
+        count = item.count;
+        countries[item.value.toUpperCase()] = count;
+        max = count > max ? count : max;
+      }
+
+      // Calculate the scale.
+      var domain = computeSteps(max, 6).filter(function (d) {
+        return !isNaN(d);
+      });
+
+      stat.color = d3.scale.threshold()
+          .domain(domain)
+          .range(colorbrewer[color][7]);
+
+      stat.getColor = function (iso3) {
+        var value = this.getValue(iso3);
+        return value ? this.color(value) : '#fff';
+      };
+      stat.getValue = function (iso3) {
+        return this.countries[iso3] || 0;
+      };
+    }
+
+    // Calculate 'count' thresholds from 'max' value.
+    function computeSteps(max, count) {
+      var magnitude = Math.floor(Math.log(max) / Math.LN10),
+          stepHop = Math.pow(10, magnitude),
+          stepMax = Math.floor(max / stepHop) * stepHop,
+          divide = stepMax > 10,
+          steps = [], i, l;
+
+      steps.push(stepMax);
+      for (i = 0, l = Math.min(count, stepMax) - 1; i < l; i++) {
+        if (divide) {
+          stepHop = stepMax <= stepHop ? stepHop / 10 : stepHop;
+          stepMax = stepHop * Math.floor(stepMax / (2 * stepHop));
+        }
+        else {
+          stepMax -= 1;
+        }
+        steps.push(stepMax >= 1 ? stepMax : 0);
+      }
+      return steps.reverse();
+    }
+
+    // Retrieve the current stats for the displayed resource.
+    function getCurrentStats() {
+      return stats[activeResource];
+    }
+
+    // Get the currently selected year.
+    function getSelectedYear() {
+      return layerControl.select('.control.year select').node().value;
+    }
+
+    // Update choropleth.
+    function updateMap(transition) {
+      var stat = getCurrentStats();
+
+      svg.selectAll('.country')
+          .transition()
+          .duration(transition ? 500 : 0)
+          .attr('fill', function (d) {
+            return stat.getColor(d.properties.iso3);
+          });
+
+      updateLegend();
+      updateExport();
+    }
+
+    // Update the country list.
+    function updateCountryList(countries) {
+      var data = countries.data;
+      for (var i = 0, l = data.length; i < l; i++) {
+        var fields = data[i].fields;
+        fields.sort = removeDiacritics(fields.name);
+        fields.iso3 = fields.iso3.toUpperCase();
+        countryList.push(fields);
+      }
+      countryList.sort(function (a, b) {
+        return a.sort < b.sort ? -1 : (a.sort > b.sort ? 1 : 0);
+      });
+    }
+
+    // Load the map data.
+    function loadData(year, loadWorld) {
+      var loader = queue();
+
+      spinner.spin(container.node());
+
+      loader
+        .defer(rwapi.reports, year)
+        .defer(rwapi.jobs, year)
+        .defer(rwapi.training, year)
+        .defer(rwapi.disasters, year)
+
+      if (loadWorld) {
+        loader
+          .defer(d3.json, 'data/un.countries.mercator.topojson')
+          .defer(d3.json, 'data/un.boundaries.mercator.topojson')
+          .defer(rwapi.countries);
+      }
+
+      loader.await(function (error, reports, jobs, training, disasters, world, boundaries, countries) {
+        spinner.stop();
+
+        if (error === null) {
+          setStats('reports', reports, 'Reds');
+          setStats('jobs', jobs, 'Blues');
+          setStats('training', training, 'Oranges');
+          setStats('disasters', disasters, 'Purples');
+
+          if (countries) {
+            updateCountryList(countries);
+          }
+
+          if (world) {
+            drawMap(world, boundaries);
+          }
+
+          updateMap(false);
+        }
+      });
+    }
+
+    /***************
+     * Sort Helper *
+     ***************/
+
+    var lower_diacritics = [
+      [/[\340-\346]/g, 'a'],
+      [/[\350-\353]/g, 'e'],
+      [/[\354-\357]/g, 'i'],
+      [/[\362-\370]/g, 'o'],
+      [/[\371-\374]/g, 'u'],
+      [/[\361]/g, 'n'],
+      [/[\347]/g, 'c']
+    ];
+    function removeDiacritics(text) {
+      text = text.toLowerCase();
+      for (var i = 0, l = lower_diacritics.length; i < l; i++) {
+        text = text.replace(lower_diacritics[i][0], lower_diacritics[i][1]);
+      }
+      return text;
+    }
+
+    /********
+     * Main *
+     ********/
+    var width = 1000,
+        height = 670,
+        container = d3.select('#' + id),
+        spinner = new Spinner(),
+        formatter = d3.format(",.0f"),
+        resources = ['reports', 'jobs', 'training', 'disasters'],
+        stats = {},
+        countryList = [],
+        activeResource = resources[0],
+        startingYear = 1996,
+        currentYear = new Date().getUTCFullYear(),
+        handleZoom, handleTranslate;
+
+    // Add layers.
+    var layerMap = container.append('div').attr('class', 'layer-map'),
+        layerMarker =  container.append('div').attr('class', 'layer-marker'),
+        layerControl = container.append('div').attr('class', 'layer-control');
+
+    layerControl.append('div').attr('class', 'top left');
+    layerControl.append('div').attr('class', 'top right');
+    layerControl.append('div').attr('class', 'bottom right');
+    layerControl.append('div').attr('class', 'bottom left');
+
+    // Label.
+    var label = layerMarker.append('div')
+        .style('display', 'none')
+        .attr('class', 'label right');
+
+    var path = d3.geo.path().projection(null);
+
+    var svgContainer = layerMap.append('svg')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .attr('viewBox', '0 0 ' + width + ' ' + height);
+
+    var svg = svgContainer.append('g')
+        .attr('transform', 'matrix(1 0 0 1 0 0)')
+        .on('mousemove', moveLabel)
+        .on('mouseover', showLabel)
+        .on('mouseout', hideLabel);
+
+    return {
+      load: function () {
+        // Load the data.
+        loadData(currentYear - 1, true);
+      }
+    };
+  };
+
+})();
+
 (function() {
 	var rwapi = window.rwapi = {
 

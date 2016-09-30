@@ -269,6 +269,7 @@
 		<script src="./vendors/d3.min.js"></script>
 		<script src="./vendors/URI.min.js"></script>
 		<script src="./vendors/jsrsasign-latest-all-min.js"></script>
+  		<script src='./vendors/FileSaver.min.js'></script>
   		<script src='./js/app.js'></script>
 		<script>
 			(function(w,d,s,g,js,fs){
@@ -278,7 +279,9 @@
 			  fs.parentNode.insertBefore(js,fs);js.onload=function(){g.load('analytics');};
 			}(window,document,'script'));
 
+			console.log('index', Math.floor(Date.now() / 1000));
 			gapi.analytics.ready(function() {
+			console.log('gapi.analytics.ready', Math.floor(Date.now() / 1000));
 				gaapi.authorize();
 			});
 		</script>

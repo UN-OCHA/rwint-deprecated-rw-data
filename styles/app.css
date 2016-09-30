@@ -28,7 +28,7 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 .tooltip-inner { background-color: #999; white-space: pre; max-width: none; }
 
-.truncate { display: inline-block; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; visibility: hidden; }
+.truncate { color: #999; display: inline-block; font: 14px Helvetica, Arial, sans-serif; width: 150px; white-space: nowrap; overflow: hidden; text-align: left; text-overflow: ellipsis; }
 
 @media (min-width: 1200px) { .container { width: 1170px; } }
 
@@ -36,7 +36,7 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 @media (max-width: 768px) { .truncate { width: 255px; } }
 
-@media (max-width: 769px) { .truncate { width: 95px; }
+@media (max-width: 769px) { .truncate { width: 115px; }
   .mobile-only { display: block; }
   header { display: none; }
   nav { margin-bottom: 0px !important; }
@@ -67,6 +67,10 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 .chart-container .title .fa { color: #999; font-size: 8px; padding: 0 9px 0 6px; vertical-align: 2px; }
 
 .chart-container .citation { color: #B7B7B7; font-size: 11px; margin: 10px 0 0; min-height: 14px; }
+
+.chart-container .download-tooltip { bottom: 8px; color: #999; cursor: pointer; font-size: 15px; position: absolute; right: 16px; }
+
+.chart-container .download-tooltip:hover { color: #419AF1; }
 
 .chart-container .chart-inner { height: 248px; overflow-x: hidden; overflow-y: hidden; text-align: center; }
 
@@ -104,7 +108,7 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .chart.timeline-chart.yearMonth .dot, .chart-container .chart-inner .user-chart.timeline-chart.yearMonth .dot { fill: #B490E3; }
 
-.chart-container .chart-inner.loading .chart, .chart-container .chart-inner.loading .user-chart { opacity: 0.3; }
+.chart-container .chart-inner.loading .chart, .chart-container .chart-inner.loading .user-chart { background: none; opacity: 0.5; }
 
 .chart-container .chart-inner.loading .loader { display: block; }
 
@@ -118,7 +122,7 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .chart-container .chart-inner .loader { display: none; left: 50%; position: absolute; top: 20%; transform: translate(-50%, -50%); }
 
-.chart-container .chart-inner.loading + .citation { opacity: 0.3; }
+.chart-container .chart-inner.loading + .citation, .chart-container .chart-inner.loading + .citation + .download-tooltip { opacity: 0.3; }
 
 .flex-grid { align-content: stretch; display: flex; flex-flow: column wrap; height: 950px; max-width: 1260px; }
 
@@ -130,7 +134,7 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .select2-results__option { padding: 5px 6px; }
 
-.select2-container { max-width: 247px; min-width: 247px; }
+.select2-container { max-width: 247px; }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: #419AF1; }
 
