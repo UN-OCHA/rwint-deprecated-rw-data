@@ -88,7 +88,6 @@ $(document).ready(initUtil);
 	    jobsExperienceID: [],
 
 	    init: function(){
-	    	console.log('init filters');
 	    	filters.rwURL = 'https://api.reliefweb.int/v1/';
 
 	    	//init filter vars
@@ -533,7 +532,7 @@ $(document).ready(function() {
 
 		//define data events
 		$(document).on( "userDataReady", function(e, result, dimensionObj, total, sampleObj, topTotal) {
-			console.log('userDataReady', dimensionObj.name);
+			//console.log('userDataReady', dimensionObj.name);
 			//format dimension name
 			var dimension = util.formatName(dimensionObj.name);
 			var chart = $('.' + dimension);
@@ -1069,7 +1068,7 @@ $(document).ready(function() {
 	    else{
 	    	truncLimit = 8;
 	    }
-	    console.log(w, truncLimit);
+	    //console.log(w, truncLimit);
 	}
 
 	function createCharts(container, dimensions, type){
@@ -1139,7 +1138,7 @@ $(document).ready(function() {
 // |                                                              |
 // +--------------------------------------------------------------+
 	$(document).on( "dataReady", function(e, result, dimensionObj, total, sampleObj) {
-		console.log('dataReady', dimensionObj.name);
+		//console.log('dataReady', dimensionObj.name);
 		//format dimension name
 		var dimension = util.formatName(dimensionObj.name);
 		var chart = $('.' + dimension);
@@ -1158,7 +1157,7 @@ $(document).ready(function() {
 		gaapi.getData(timelineDimensions[1], 'timelineDataReady');
 	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
-		console.log('dataReady', dimensionObj.id);
+		//console.log('dataReady', dimensionObj.id);
 		drawTimelineChart(result, dimensionObj.id);
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
@@ -1325,7 +1324,7 @@ $(document).ready(function() {
 		bar.select('.label')
 		   	.attr('class', 'label')
 		  	.attr('data-toggle', 'tooltip')
-		  	.attr('title', function(d) { return d.value; })
+		  	.attr('data-original-title', function(d) { return d.value; })
 		    .attr('dy', labelY)
 		    .text(function(d) { return util.truncateText(d.value ,truncLimit); });
 
@@ -1638,7 +1637,7 @@ if (!window.ExportData) {
 
 
     authorize: function(event){ 
-      console.log('GA authorize', Math.floor(Date.now() / 1000));
+      //console.log('GA authorize', Math.floor(Date.now() / 1000));
       var pHeader = {'alg':'RS256','typ':'JWT'};
       var sHeader = JSON.stringify(pHeader);
       var pClaim = {};
@@ -1669,7 +1668,7 @@ if (!window.ExportData) {
               'token_type': 'Bearer'
             }
           });
-          console.log('GA ready', Math.floor(Date.now() / 1000));
+          //console.log('GA ready', Math.floor(Date.now() / 1000));
           $(document).trigger('gaReady');
       });
 
@@ -1685,7 +1684,7 @@ if (!window.ExportData) {
 
 
     getData: function(dimensionObj, eventCallback, pageSize){
-      console.log('getGAData',dimensionObj.id);
+      //console.log('getGAData',dimensionObj.id);
       eventCallback = (eventCallback==undefined) ? 'dataReady' : eventCallback;
       pageSize = (pageSize==undefined) ? 10000 : pageSize;
       gaapi.loadCount++;
@@ -1720,7 +1719,7 @@ if (!window.ExportData) {
 
         //set up date range
         var today = new Date();
-        var toDate = today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + today.getDate();
+        var toDate = today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + ("00" + today.getDate()).slice(-2);
         var startDate = (dimensionObj.id=='yearMonth') ? filters.timelineStartDate.split('T')[0] : gaapi.formatDate(filterParams.visited_startDate);
         var endDate = (dimensionObj.id=='yearMonth') ? toDate : gaapi.formatDate(filterParams.visited_endDate);
         
@@ -5809,7 +5808,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 	var rwapi = window.rwapi = {
 
 		getData: function(dimensionObj){
-			console.log('getRWData',dimensionObj.name);
+			//console.log('getRWData',dimensionObj.name);
 			var filterParams = filters.filterParams;
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
@@ -5828,7 +5827,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			//set date created filter
 			if (dimension=="date.created"){
 				var today = new Date();
-				var toDate = util.formatDate(today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + today.getDate());
+				var toDate = util.formatDate(today.getFullYear() + "-" + ("00" + (today.getMonth()+1)).slice(-2) + "-" + ("00" + today.getDate()).slice(-2));
 				var fromDate = filters.timelineStartDate;
 				conditionArr.push({"field": "date.created", "value": {"from": fromDate, "to": toDate} });
 			}
@@ -5852,7 +5851,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			}
 			var rwQuery = { "facets": facets };
 
-			//if (dimension=="theme") console.log(JSON.stringify(rwQuery));
+			//if (dimension=="date.created") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
 			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';

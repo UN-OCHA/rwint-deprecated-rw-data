@@ -52,155 +52,15 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-md-3">
-					<div class="filter-mobile mobile-only"><h4>Filter Options</h4><div class="filter-toggle mobile-only"><a href="#">open</a></div></div>
-<div class="filters">
-	<h4>Filter Options</h4><a href="#" class="clear-filters-btn">clear all</a><div class="filter-toggle mobile-only">|<a href="#" class="close-toggle">close</a></div>
-	<div class="loading">Loading...</div>
-	<div class="filter-menu">
-		<ul>
-			<li class="metric-selector">
-				<input type="radio" id="contentMetric" name="metric" value="content published" checked> <label for="contentMetric">Content Published</label><br>
-				<input type="radio" id="sessionsMetric" name="metric" value="sessions"> <label for="sessionsMetric">Sessions</label>
-			</li>
-			<li>
-				<label for="contentTypeFilter" class="active">Content Type</label>
-				<select id="contentTypeFilter" data-dimension="" data-gadimension="dimension1" class="dropdown content_type-dropdown">
-				</select>
-			</li>
-			<li class="all-country">
-				<label for="countryFilter">Country</label>
-				<select id="countryFilter" data-dimension="country" data-gadimension="dimension6" class="dropdown country-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="themeFilter">Theme</label>
-				<select id="themeFilter" data-dimension="theme" data-gadimension="dimension8" class="dropdown themes-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li class="sources reports-sources">
-				<label for="reportsSourcesFilter">Organization</label>
-				<select id="reportsSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li class="sources jobs-sources">
-				<label for="jobsSourcesFilter">Organization</label>
-				<select id="jobsSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li class="sources training-sources">
-				<label for="trainingSourcesFilter">Organization</label>
-				<select id="trainingSourcesFilter" data-dimension="source" data-gadimension="dimension7" class="dropdown sources-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li class="dateCreatedFilter">
-				<label>Date Created</label>
-				<div id="dateCreatedPicker" data-mode="created" data-dimension="" data-gadimension="dimension13" class="input-group input-daterange">
-				    <input type="text" id="created_startDate" class="form-control start-date" value="" placeholder="All">
-				    <span class="input-group-addon">to</span>
-				    <input type="text" id="created_endDate" class="form-control end-date" value="" placeholder="All">
-				</div>
-				<div class="submit-btn"></div>
-			</li>
-			<li class="dateVisitedFilter">
-				<label>Date Visited</label>
-				<div id="dateVisitedPicker" data-mode="visited" data-dimension="" data-gadimension="" class="input-group input-daterange">
-				    <input type="text" id="visited_startDate" class="form-control start-date" value="" placeholder="All">
-				    <span class="input-group-addon">to</span>
-				    <input type="text" id="visited_endDate" class="form-control end-date" value="" placeholder="All">
-				</div>
-				<div class="submit-btn"></div>
-			</li>
-		</ul>
-		
-		<h4 class="sub-filters-header">Report Filter Options</h4>
-		<ul class="sub-menu reports-filters">
-			<li>
-				<label for="formatFilter">Format</label>
-				<select id="formatFilter" data-dimension="format" data-gadimension="dimension2" class="dropdown format-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="disasterFilter">Disaster</label>
-				<select id="disasterFilter" data-dimension="disaster" data-gadimension="dimension9" class="dropdown disaster-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="disasterTypeFilter">Disaster Type</label>
-				<select id="disasterTypeFilter" data-dimension="disaster_type.name" data-gadimension="dimension10" class="dropdown disasterType-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="vulnerableGroupsFilter">Vulnerable Groups</label>
-				<select id="vulnerableGroupsFilter" data-dimension="vulnerable_groups" data-gadimension="dimension11" class="all-dropdown dropdown vulnerableGroups-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<!-- <li><button type="button" class="apply-filters-btn btn btn-default">Apply Filters</button></li> -->
-		</ul>
-		<ul class="sub-menu jobs-filters">
-			<li>
-				<label for="typeFilter">Job Type</label>
-				<select id="typeFilter" data-dimension="type" data-gadimension="dimension15" class="dropdown jobtype-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="experienceFilter">Job Experience</label>
-				<select id="experienceFilter" data-dimension="experience" data-gadimension="dimension16" class="dropdown experience-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="careerCategoryFilter">Career Category</label>
-				<select id="careerCategoryFilter" data-dimension="career_categories" data-gadimension="dimension17" class="dropdown careerCategory-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-		</ul>
-		<ul class="sub-menu training-filters">
-			<li>
-				<label for="costFilter">Training Cost</label>
-				<select id="costFilter" data-dimension="cost" data-gadimension="dimension14" class="dropdown cost-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="trainingCareerCategoryFilter">Career Category</label>
-				<select id="trainingCareerCategoryFilter" data-dimension="career_categories" data-gadimension="dimension17" class="dropdown trainingCareerCategory-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="trainingTypeFilter">Training Type</label>
-				<select id="trainingTypeFilter" data-dimension="type" data-gadimension="dimension18" class="dropdown trainingType-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-			<li>
-				<label for="trainingFormatFilter">Training Format</label>
-				<select id="trainingFormatFilter" data-dimension="format" data-gadimension="dimension19" class="dropdown trainingFormat-dropdown">
-					<option>All</option>
-				</select>
-			</li>
-		</ul>
-	</div>
-</div>
+					{% include "_filters.html" %}
 				</div>
 				<div class="col-md-9 no-pad">
 					<div class="intro">
 						<ul class="horiz-box">
-							<li><img src="img/logo-reliefweb.png" /></li>
-							<li><h1>Content & Users Analytics</h1></li>
+							<li><img src="img/header-logo-rw.png" width="300" /></li>
+							<li><h1>RW Data Snapshot<sub>alpha</sub></h1></li>
 						</ul>
-						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce consequat diam fringilla sodales dignissim. Quisque sed varius diam. Phasellus ut dolor facilisis massa fringilla laoreet vel eu erat. Praesent porttitor at quam non feugiat.</p>
+						<p>ReliefWeb editorial team collects and curates humanitarian information from more than 4,000 verified sources, including reports, job announcements, and training opportunities. We are now making public the data that we have gathered about the content published and the users accessing ReliefWeb. See more detailed information in the <a href="https://github.com/reliefweb/rw-trends-v3/wiki" target="_blank">wiki</a>.</p>
 					</div>
 					<div class="row timeline-container"></div>
 					<div class="row generic-container"></div>
@@ -279,9 +139,7 @@
 			  fs.parentNode.insertBefore(js,fs);js.onload=function(){g.load('analytics');};
 			}(window,document,'script'));
 
-			console.log('index', Math.floor(Date.now() / 1000));
 			gapi.analytics.ready(function() {
-			console.log('gapi.analytics.ready', Math.floor(Date.now() / 1000));
 				gaapi.authorize();
 			});
 		</script>
