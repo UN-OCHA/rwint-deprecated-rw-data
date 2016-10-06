@@ -590,13 +590,24 @@ $(document).ready(function() {
 	}
 
 	function setCitation(element, sampleObj){
-		var citation = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'Source: Google Analytics API. This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : '';
+		var citation = (sampleObj!=undefined && sampleObj.samplesReadCounts!=undefined) ? 'Source: Google Analytics API. This report is based on ' + formatNum(sampleObj.samplesReadCounts) + ' sessions (' + ((sampleObj.samplesReadCounts/sampleObj.samplingSpaceSizes)*100).toFixed(2) + '% of sessions)' : 'Source: Google Analytics API.';
 		if (element.find('.citation').length){
 			element.find('.citation').html(citation);
 		}
 		else{
 			element.append('<p class="citation">' + citation + '</p>');
 		}
+	}
+
+	function setExportLink(chart, filename, data){
+		if ($(chart).find('a.download-tooltip').length<1){
+			$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($(chart));
+		}
+
+		$(chart).find('a.download-tooltip').unbind().click(function(e) {
+      		e.preventDefault();
+      		exportData(filename, data);
+        });
 	}
 
 	function exportData(name, dataset) {
@@ -649,16 +660,12 @@ $(document).ready(function() {
 	function drawBarChart(data, dimensionObj, sampleObj, topTotal){
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
+		var chartContainer = $(chartName).parent().parent();
 		var topTitle = (dimensionObj.count!=undefined) ? 'Top ' + data.length + ' ' : '';
-		$(chartName).parent().parent().find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
+		$(chartContainer).find('h3').html(topTitle + dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		
-		setCitation($(chartName).parent().parent(), sampleObj);
-
-		//set download data action
-		$(chartName).parent().parent().find('a.download-tooltip').click(function(e) {
-      		e.preventDefault();
-      		exportData(dimensionObj.title, data);
-        });
+		setCitation($(chartContainer), sampleObj);
+		setExportLink($(chartContainer), dimensionObj.title, data);
 	
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -720,21 +727,16 @@ $(document).ready(function() {
 	function drawPieChart(data, dimensionObj, total, sampleObj){
 		var dimension = util.formatName(dimensionObj.name);
 		var chartName = '.' + dimension;
-		$(chartName).parent().parent().find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
+		var chartContainer = $(chartName).parent().parent();
+		$(chartContainer).find('h3').html(dimensionObj.title + ' <i class="fa fa-circle" aria-hidden="true"></i><span>Number of sessions for ' + filters.filterParams.content_type + '</span><hr>').addClass('title');
 		$(chartName).parent().addClass('pie-chart');
-		setCitation($(chartName).parent().parent(), sampleObj);
+		setCitation($(chartContainer), sampleObj);
+		setExportLink($(chartContainer), dimensionObj.title, data);
 
 		if ($(chartName).children().length>0){
 			d3.select(chartName).selectAll("svg > *").remove();
 			$('[data-toggle="tooltip"]').tooltip('destroy');
 		}
-
-		//set download data action
-		$(chartName).parent().parent().find('a.download-tooltip').click(function(e) {
-      		e.preventDefault();
-      		exportData(dimensionObj.title, data);
-        });
-	
 
 		var w = $('.chart-inner').width(),
 	    	h = $('.chart-inner').height(),
