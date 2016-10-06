@@ -577,14 +577,13 @@ $(document).ready(function() {
 	function createCharts(container, dimensions){
 		$(container).append('<h2>User Data</h2>');
 		for (var i=0; i<dimensions.length; i++){
-            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart user-chart '+ dimensions[i].name +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div><a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a></div></div>');
         }
 	}
 
 	function getUserCharts(){
 		$('.user-chart').parent().removeClass('nodata').addClass('loading');
 		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
-		$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($('.chart-container'));
 		for (var i=0; i<userDimensions.length; i++){
 			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
 		}
@@ -604,10 +603,7 @@ $(document).ready(function() {
       var rows = [], row, item, data, values;
       var category = (util.getMetric()=='sessions') ? util.getMetric() : filters.filterParams.content_type;
 
-	  // var uri = new URI(); 
-	  // var query = uri.query();
-
-      // Column labels.
+	  // Column labels.
       rows.push(['Number of sessions for ' + category + ' by ' + name].concat('Count'));
  
       // Data rows.
@@ -1068,7 +1064,6 @@ $(document).ready(function() {
 	    else{
 	    	truncLimit = 8;
 	    }
-	    //console.log(w, truncLimit);
 	}
 
 	function createCharts(container, dimensions, type){
@@ -1112,9 +1107,6 @@ $(document).ready(function() {
 			}
 			dimensions = $.merge( $.merge( [], genericDimensions ), contentDimensions );
 			createCharts('.contenttype-container', contentDimensions, currentContentType);
-
-			//create export links
-			$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($('.chart-container'));
 		}
 
 		//get data
@@ -1138,7 +1130,6 @@ $(document).ready(function() {
 // |                                                              |
 // +--------------------------------------------------------------+
 	$(document).on( "dataReady", function(e, result, dimensionObj, total, sampleObj) {
-		//console.log('dataReady', dimensionObj.name);
 		//format dimension name
 		var dimension = util.formatName(dimensionObj.name);
 		var chart = $('.' + dimension);
@@ -1157,7 +1148,6 @@ $(document).ready(function() {
 		gaapi.getData(timelineDimensions[1], 'timelineDataReady');
 	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
-		//console.log('dataReady', dimensionObj.id);
 		drawTimelineChart(result, dimensionObj.id);
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
@@ -1204,12 +1194,20 @@ $(document).ready(function() {
 		}
 	}
 
+	function setExportLink(chart, filename, data){
+		if ($(chart).find('a.download-tooltip').length<1){
+			$('<a href="#" class="download-tooltip" data-toggle="tooltip" title="Download CSV data"><i class="fa fa-download" aria-hidden="true"></i></a>').appendTo($(chart));
+		}
+
+		$(chart).find('a.download-tooltip').unbind().click(function(e) {
+      		e.preventDefault();
+      		exportData(filename, data);
+        });
+	}
+
 	function exportData(name, dataset) {
       var rows = [], row, item, data, values;
       var category = (util.getMetric()=='sessions') ? util.getMetric() : filters.filterParams.content_type;
-
-	  // var uri = new URI(); 
-	  // var query = uri.query();
 
       // Column labels.
       rows.push(['Number of ' + category + ' by ' + name].concat('Count'));
@@ -1233,7 +1231,7 @@ $(document).ready(function() {
         }
       }
 
-      // Export data.
+      // Export data.	
       ExportData.export(name, rows);
     }
 	
@@ -1266,12 +1264,7 @@ $(document).ready(function() {
 		var chartContainer = $(chartName).parent().parent();
 		setChartTitle(chartContainer, dimensionObj.title);
 		setCitation(chartContainer, sampleObj);
-
-		//set download data action
-		$(chartContainer).find('a.download-tooltip').click(function(e) {
-      		e.preventDefault();
-      		exportData(dimensionObj.title, data);
-        });
+		setExportLink(chartContainer, dimensionObj.title, data);
 
 		//define ranges
 		x.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -1316,7 +1309,6 @@ $(document).ready(function() {
 		    .attr('fill', function(d) { return color(d.count); })
 		    .attr('x', labelWidth+countWidth) 	
 		    .attr('height', barHeight)
-		    //.attr('width', 0)
 			.transition()
 	       		.duration(duration)
 		    .attr('width', function(d) { return x(d.count); });
@@ -1371,11 +1363,8 @@ $(document).ready(function() {
 		$(chartContainer).find('h3 span').html(title);
 		$(chartName).parent().removeClass('loading');
 
-		//set download data action
-		$(chartContainer).find('a.download-tooltip').click(function(e) {
-      		e.preventDefault();
-      		exportData('month', data);
-        });
+		var filename = (dimension=='yearMonth') ? 'monthly-sessions' : 'monthly-content';
+		setExportLink(chartContainer, filename, data);
 
 		var margin = {left: 35, top: 10, right: 20, bottom: 45},
 			width = $('.chart-container').width() - margin.left - margin.right,
@@ -1510,6 +1499,7 @@ if (!window.ExportData) {
     },
 
     export: function (name, data) {
+      console.log('export',name);
       var csv = [], type = 'csv';
 
       for (var r = 0, rl = data.length; r < rl; r++) {
