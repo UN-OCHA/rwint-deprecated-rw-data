@@ -22,7 +22,9 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 .intro li:first-child { border-right: 1px solid #d4d4d4; }
 
-.intro p { font-size: 12px; line-height: 16px; margin: 0 auto; padding-top: 10px; width: 75%; }
+.intro p { font-size: 13px; line-height: 17px; margin: 0 auto; padding-top: 10px; width: 80%; }
+
+.intro p.sub { font-size: 12px; line-height: 16px; }
 
 sub { font-size: 35%; margin-left: 5px; text-transform: uppercase; }
 
