@@ -1,0 +1,16 @@
+{% set charts = ["browser","language","user_country","user_device","user_gender","user_age"] %}
+
+<h2>User Data</h2>
+{% for chart in charts %}
+	<div class="col-md-6">
+		<div class="chart-container">
+			<h3></h3>
+			<div class="chart-inner loading">
+				<svg class="user-chart {{ chart }}"></svg>
+				<div class="nodata-msg">There is no data for this time period.</div>
+				<div class="loader">Loading...</div>
+			</div>
+		</div>
+	</div>
+{% endfor %}
+

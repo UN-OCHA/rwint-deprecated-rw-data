@@ -1,0 +1,179 @@
+body{
+	font-family: $sans;
+	font-size: 12px;
+	line-height: 14px;
+}
+
+ul{
+	padding: 0;
+	li{
+		list-style-type: none;
+	}	
+	&.horiz-box{
+		li{
+			display: inline-block;
+		}
+	}
+}
+
+hr{
+	border-top: 1px solid $grey-d;
+	margin: 10px 0;
+}
+
+.mobile-only{
+	display: none;
+}
+
+.no-pad{
+	padding: 0;
+}
+
+footer{
+	background-color: #f4f4f0;
+	color: #333;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size: 14px;
+	line-height: 1.42857143;
+	padding-top: 40px;
+}
+
+.timeline-container,
+.generic-container,
+.contenttype-container,
+.user-container{
+	padding: 0 15px 15px;
+}
+
+.intro{
+	padding-bottom: 20px;
+	text-align: center;
+	li{
+		padding: 0 16px;
+		vertical-align: top;
+		&:first-child{
+			border-right: 1px solid $grey-d;
+		}
+	}
+	p{
+		font-size: 13px;
+		line-height: 17px;
+		margin: 0 auto;
+		padding-top: 10px;
+		width: 80%;
+		&.sub{
+			font-size: 12px;
+			line-height: 16px;
+		}
+	}
+}
+
+sub{
+	font-size: 35%;
+	margin-left: 5px;
+	text-transform: uppercase;
+}
+
+.tooltip.top .tooltip-arrow{
+  border-top-color: $grey-9;
+}
+
+.tooltip-inner{
+	background-color: $grey-9;
+    white-space: pre;
+    max-width: none;
+}
+
+.truncate {
+	color: $grey-9;
+	display: inline-block;
+	font: 14px Helvetica, Arial, sans-serif;
+	width: 150px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+}
+
+// ::-webkit-scrollbar {
+//     -webkit-appearance: none;
+//     width: 7px;
+// }
+// ::-webkit-scrollbar-thumb {
+//     border-radius: 3px;
+//     background-color: $grey-9;//rgba(0,0,0,.5);
+//     -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+// }
+
+@media (min-width: $screen-lg){
+	.container{
+		width: 1170px;
+	}
+}
+
+@media (max-width: 1025px){
+	.truncate {
+		width: 115px;
+	}
+}
+
+@media (max-width: 768px) {
+	.truncate {
+		width: 255px;
+	}
+}
+
+@media (max-width: $screen-sm){//414
+	.truncate {
+		width: 115px;
+	}
+	.mobile-only{
+		display: block;
+	}
+	header{
+		display: none;
+	}
+	nav{
+		margin-bottom: 0px !important;
+	}
+	.navbar-fixed-top{
+		position: absolute;
+	}
+	.container{
+		margin: 0 auto;
+		padding: 0 15px;
+	}
+	.intro{
+		padding-top: 50px;
+		li:first-child{
+			border: 0;
+		}
+		p{
+			width: 100%;
+		}
+	}
+	.no-pad{
+		padding: 0 15px;
+	}
+	// .generic-container,
+	// .contenttype-container,
+	// .user-container{
+	// 	padding-left: 10px;
+	// 	> div{
+	// 		padding-left: 0;
+	// 		padding-right: 30px;
+	// 	}
+	// }
+	footer{
+		margin: 0 auto;
+		padding-left: 15px;
+		padding-right: 15px;
+	}
+}
+
+
+@media (max-width: 300px) {
+	.truncate {
+		width: 60px;
+	}
+}

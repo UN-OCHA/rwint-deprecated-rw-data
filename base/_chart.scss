@@ -1,0 +1,165 @@
+.chart-container{
+	background-color: #fff;
+	border: 2px solid $grey-border;
+	box-shadow: 1px 1px 8px $grey-d;
+	min-height: 320px;
+	margin: 15px 0;
+	opacity: 1;
+	overflow: hidden;
+	padding: 10px 14px 5px;
+	position: relative;
+	width: 100%;
+ 	.title{
+ 		.fa{
+ 			color: $grey-9;
+ 			font-size: 8px;
+ 			padding: 0 9px 0 6px;
+ 			vertical-align: 2px;
+ 		}
+ 	}
+ 	.citation{
+ 		color: $grey-b;
+ 		font-size: 11px;
+ 		margin: 10px 0 0;
+ 		min-height: 14px;
+ 	}
+	.download-tooltip{
+		bottom: 8px;
+		color: $grey-9;
+		cursor: pointer;
+		font-size: 15px;
+		position: absolute;
+		right: 16px;
+		&:hover{
+			color: $blue-highlight;
+		}
+	}
+	.chart-inner{
+		height: 248px;
+		overflow-x: hidden;
+		overflow-y: hidden;
+		text-align: center;
+		&:hover{
+			overflow-y: auto; //fix for chrome 
+		}
+		.chart,
+		.user-chart{
+			background: transparent url('../img/chart-bg.png') repeat 0 0;
+			display: block;
+			padding: 12px 10px 0;
+			transition: all 0.5s ease;
+			width: 100%;
+			rect{
+		 		//fill: $blue;
+		 	}
+			.label,
+			.count{
+				cursor: default;
+				fill: $grey-9;
+				font: 14px $sans;
+			}
+			.count{
+				fill: black;
+				font-size: 16px;
+				text-anchor: end;
+			}
+			.arc text {
+			  text-anchor: middle;
+			}
+			.arc path {
+			  stroke: #fff;
+			}
+			&.user_gender,
+			&.user_device{
+				background: none;
+				min-height: 248px;
+				padding-top: 0;
+				margin-top: -10px;
+			}
+			&.timeline-chart{
+				background: none;
+				padding: 0;
+				.axis path,
+				.axis line{
+					fill: none;
+					stroke: $grey-d;
+				}
+				.line{
+					fill: none;
+					stroke: $blue;
+					stroke-width: 2px;
+				}
+				.tick text{
+					fill: $grey-9;
+					font-size: 11px;
+					text-anchor: end;
+				}
+				.tick line{
+					opacity: 1;
+				}
+				.area {
+				    fill: rgba(9,136,187, 0.5);
+				    stroke-width: 0;
+				}
+				.dot {
+					opacity: 0;
+					fill: $blue;
+				}
+				&.yearMonth{
+					.line{
+						stroke: $purple;
+					}
+					.area {
+					    fill: rgba(180,144,227, 0.5);
+					}
+					.dot{
+						fill: $purple;
+					}
+				}
+			}
+		}	
+		&.loading{
+			.chart,
+			.user-chart{
+				background: none;
+				opacity: 0.5;
+			}
+			.loader{
+				display: block;
+			}
+		}
+		&.nodata{
+			overflow-x: hidden;
+			overflow-y: hidden;
+			.chart,
+			.user-chart{
+				opacity: 0;
+			}
+			.nodata-msg{
+				display: block;
+			}
+		}	
+		.nodata-msg{
+			display: none;
+			left: 50%;
+			position: absolute;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			width: 100%;
+		}
+		.loader{
+			display: none;
+			left: 50%;
+			position: absolute;
+			top: 20%;
+			transform: translate(-50%, -50%);
+		}
+	}
+	.chart-inner.loading + .citation,
+	.chart-inner.loading + .citation + .download-tooltip{
+		opacity: 0.3;
+	}
+	.chart-inner.loading + .download-tooltip{
+		opacity: 0;
+	}
+}
