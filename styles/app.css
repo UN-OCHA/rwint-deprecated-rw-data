@@ -16,6 +16,8 @@ footer { background-color: #f4f4f0; color: #333; font-family: "Helvetica Neue",H
 
 .timeline-container, .generic-container, .contenttype-container, .user-container { padding: 0 15px 15px; }
 
+.user-container .chart-container { min-height: 344px; }
+
 .intro { padding-bottom: 20px; text-align: center; }
 
 .intro li { padding: 0 16px; vertical-align: top; }
@@ -38,7 +40,8 @@ sub { font-size: 35%; margin-left: 5px; text-transform: uppercase; }
 
 @media (max-width: 1025px) { .truncate { width: 115px; } }
 
-@media (max-width: 768px) { .truncate { width: 255px; } }
+@media (max-width: 768px) { .truncate { width: 255px; }
+  .filter-menu ul li.dateCreatedFilter, .filter-menu ul li.dateVisitedFilter { max-width: 322px; } }
 
 @media (max-width: 769px) { .truncate { width: 115px; }
   .mobile-only { display: block; }
@@ -48,7 +51,9 @@ sub { font-size: 35%; margin-left: 5px; text-transform: uppercase; }
   .container { margin: 0 auto; padding: 0 15px; }
   .intro { padding-top: 50px; }
   .intro li:first-child { border: 0; }
-  .intro p { width: 100%; }
+  .intro p { width: 93%; }
+  .intro p.sub { width: 100%; }
+  .intro img { width: 275px; }
   .no-pad { padding: 0 15px; }
   footer { margin: 0 auto; padding-left: 15px; padding-right: 15px; } }
 
@@ -66,7 +71,7 @@ h3 span { color: #999; font-weight: normal; }
 
 h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
-.chart-container { background-color: #fff; border: 2px solid #D8D8D8; box-shadow: 1px 1px 8px #d4d4d4; min-height: 320px; margin: 15px 0; opacity: 1; overflow: hidden; padding: 10px 14px 5px; position: relative; width: 100%; }
+.chart-container { background-color: #fff; border: 2px solid #D8D8D8; box-shadow: 1px 1px 8px #d4d4d4; min-height: 330px; margin: 15px 0; opacity: 1; overflow: hidden; padding: 10px 14px 5px; position: relative; width: 100%; }
 
 .chart-container .title .fa { color: #999; font-size: 8px; padding: 0 9px 0 6px; vertical-align: 2px; }
 
@@ -221,18 +226,6 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .filter-menu ul .metric-selector input[type=radio]:checked + label { color: #666; font-weight: 800; }
 
-.created-month-dropdown + .select2, .month-dropdown + .select2 { margin-right: 7px; }
-
-.time-filter-container { margin: -20px auto 12px; width: 97%; }
-
-.irs-min, .irs-max, .irs-bar, .irs-bar-edge { display: none; }
-
-.irs-single { background: #419AF1; line-height: 10px; padding: 4px 5px; }
-
-.irs-single:after { border-top-color: #419AF1; }
-
-.irs-grid-pol { background: #999; }
-
 .submit-btn { color: #419AF1; cursor: pointer; font-size: 18px; position: absolute; right: 2px; top: 26px; }
 
 .submit-btn:hover { color: #999; }
@@ -265,7 +258,9 @@ h4, .h4 { font-size: 11px; font-weight: 100; text-transform: uppercase; }
 
 .input-daterange input:first-child, .input-daterange input:last-child { border-radius: 0; }
 
-@media (max-width: 769px) { .filters { height: 100vh; left: 0; padding: 0; position: fixed; top: 100vh; width: 100%; z-index: 1031; }
+#dateCreatedPicker .input-group-addon, #dateCreatedPicker .end-date { display: none; }
+
+@media (max-width: 769px) { .filters { display: none; height: 100vh; left: 0; padding: 0; position: fixed; top: 0; width: 100%; z-index: 1031; }
   .filters > h4 { margin: 0; }
   .filters .filter-menu { height: 90vh; margin-top: 12px; overflow: scroll; }
   .filters .loading { padding-top: 12px; }
