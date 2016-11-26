@@ -1,4 +1,4 @@
-/*! Bootstrap v3.3.6 (http://getbootstrap.com) Copyright 2011-2015 Twitter, Inc. Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE) */
+/*! Bootstrap v3.3.7 (http://getbootstrap.com) Copyright 2011-2016 Twitter, Inc. Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE) */
 /*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
 html { font-family: sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 
@@ -641,7 +641,7 @@ a { color: #337ab7; text-decoration: none; }
 
 a:focus, a:hover { color: #23527c; text-decoration: underline; }
 
-a:focus { outline: thin dotted; outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
+a:focus { outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
 
 figure { margin: 0; }
 
@@ -1169,7 +1169,7 @@ input[type=range] { display: block; width: 100%; }
 
 select[multiple], select[size] { height: auto; }
 
-input[type=file]:focus, input[type=checkbox]:focus, input[type=radio]:focus { outline: thin dotted; outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
+input[type=file]:focus, input[type=checkbox]:focus, input[type=radio]:focus { outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
 
 output { display: block; padding-top: 7px; font-size: 14px; line-height: 1.42857143; color: #555; }
 
@@ -1323,7 +1323,7 @@ select[multiple].input-lg, textarea.input-lg { height: auto; }
 
 .btn { display: inline-block; padding: 6px 12px; margin-bottom: 0; font-size: 14px; font-weight: 400; line-height: 1.42857143; text-align: center; white-space: nowrap; vertical-align: middle; -ms-touch-action: manipulation; touch-action: manipulation; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; background-image: none; border: 1px solid transparent; border-radius: 4px; }
 
-.btn.active.focus, .btn.active:focus, .btn.focus, .btn:active.focus, .btn:active:focus, .btn:focus { outline: thin dotted; outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
+.btn.active.focus, .btn.active:focus, .btn.focus, .btn:active.focus, .btn:active:focus, .btn:focus { outline: 5px auto -webkit-focus-ring-color; outline-offset: -2px; }
 
 .btn.focus, .btn:focus, .btn:hover { color: #333; text-decoration: none; }
 
