@@ -22,27 +22,27 @@ var Util = function() {
 	    formatDate: function(d) {
 	        return d + "T00:00:00+0000";
 	    },
+	    formatPickerDate: function(d) {
+	    	var date = d.split('-')[0] + '-' + d.split('-')[1];
+			return date.replace(/-/g, '\/').replace(/T.+/, '');
+	    },
 	    getDaysInMonth: function(year, month) {
 			return new Date(year, month, 0).getDate();
+		},
+		getVisitedDateRange: function(){
+			var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			var startdate = filters.filterParams.visited_startDate.split('-');
+			var enddate = filters.filterParams.visited_endDate.split('-');
+			startdate = monthNames[startdate[1]-1] + ' ' + startdate[0];
+			enddate = monthNames[enddate[1]-1] + ' ' + enddate[0];
+			var range = (startdate==enddate) ? startdate : startdate + ' - ' + enddate;
+			return range;
 		},
 		isMobile: function(){
 			var is_mobile = ($('.mobile-only').is(':visible')) ? true : false;
 			return is_mobile;
 		},
 		truncateText: function(value, limit){
-			// var trunc = $('<div class="truncate">' + value + '</div>').appendTo('body');
-			// var orig = trunc.clone().css({display: 'inline', width: 'auto', visibility: 'hidden'}).appendTo('body');
-			// var str = trunc.renderedText();
-			// var lastChar = str.slice(-1);
-			// if (lastChar==" "){
-			// 		str = str.substring(0, str.length - 1);
-			// }
-			// var val = ($(trunc).width() < $(orig).width()) ? str+'...' : str;
-			// trunc.remove();
-			// orig.remove();
-			// return val;
-
-
 			if (value.length > limit) {
 				value = value.substring(0, limit + 1);
 				value = value.substring(0, Math.min(value.length, value.lastIndexOf(' ')));
@@ -53,11 +53,13 @@ var Util = function() {
 		roundNearest: function(num){
 			var p = Math.pow( 10, Math.floor( Math.log(num) / Math.LN10 ) );
 			var nearest = Math.ceil(num/p)*p;
-			// console.log(num, p, nearest, nearest-num, nearest-p);
-			// if (Math.abs(nearest-num) < Math.abs(num-(nearest-p))){
-			// 	nearest = nearest + p;
-			// }
 			return nearest;
+		}, 
+		randomStr: function(length) {
+			var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		    var result = '';
+		    for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+		    return result;
 		}
 	};
 	return self;

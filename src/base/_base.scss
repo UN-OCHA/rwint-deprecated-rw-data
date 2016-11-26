@@ -45,6 +45,12 @@ footer{
 	padding: 0 15px 15px;
 }
 
+.user-container{
+	.chart-container{
+		min-height: 344px;
+	}
+}
+
 .intro{
 	padding-bottom: 20px;
 	text-align: center;
@@ -121,6 +127,16 @@ sub{
 	.truncate {
 		width: 255px;
 	}
+	.filter-menu{
+		ul{
+			li{
+				&.dateCreatedFilter,
+				&.dateVisitedFilter{
+					max-width: 322px;
+				}
+			}
+		}
+	}
 }
 
 @media (max-width: $screen-sm){//414
@@ -149,21 +165,18 @@ sub{
 			border: 0;
 		}
 		p{
-			width: 100%;
+			width: 93%;
+			&.sub{
+				width: 100%;
+			}
+		}
+		img{
+			width: 275px;
 		}
 	}
 	.no-pad{
 		padding: 0 15px;
 	}
-	// .generic-container,
-	// .contenttype-container,
-	// .user-container{
-	// 	padding-left: 10px;
-	// 	> div{
-	// 		padding-left: 0;
-	// 		padding-right: 30px;
-	// 	}
-	// }
 	footer{
 		margin: 0 auto;
 		padding-left: 15px;

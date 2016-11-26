@@ -1,7 +1,6 @@
 $(document).ready(function() {
 	var currentContentType = 'General';
 	var dimensions = [];
-	var isGAReady = false;
 	var truncLimit = 22;
 
 	var timelineDimensions = [{id:"", name:"date.created", title:"Number of reports published per month"},
@@ -32,10 +31,15 @@ $(document).ready(function() {
 
 
 
-	filters.init();
-	$(document).on( "gaReady", init );
+	init();
 
-	function init(){    
+	function init(){
+		gaapi.QUOTA_ID = util.randomStr(6);
+		$(document).on( 'filtersReady', createDashboard);
+		filters.init();
+	}
+
+	function createDashboard(){    
 	    createCharts('.generic-container', genericDimensions, 'General');
 	    createTimelineCharts();
 	    getCharts();
@@ -62,7 +66,7 @@ $(document).ready(function() {
 		$(container).empty();
 		$(container).append('<h2>' + type + ' Data <span></span></h2>');
 		for (var i=0; i<dimensions.length; i++){
-            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
+            $(container).append('<div class="col-sm-6"><div class="chart-container"><h3></h3><div class="chart-inner loading"><svg class="chart generic-chart '+ util.formatName(dimensions[i].name) +'"></svg><div class="nodata-msg">There is no data for this time period.</div><div class="loader">Loading...</div></div></div></div>');
         }
 	}
 
@@ -76,8 +80,12 @@ $(document).ready(function() {
 
 	function getCharts(){
 		//set chart section titles
-		if (util.getMetric()=='sessions') $('.generic-container, .contenttype-container').find('h2 span').html('(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')');
-		$('.chart').parent().delay(0).queue(function(next){
+		if (util.getMetric()=='sessions') {
+			//$('.generic-container, .contenttype-container').find('h2 span').html('(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')');
+			$('.generic-container, .contenttype-container').find('h2 span').html('(' + util.getVisitedDateRange() + ')');
+
+		}
+		$('.generic-chart').parent().delay(0).queue(function(next){
 		    $(this).removeClass('nodata').addClass('loading');
 		    next();
 		});
@@ -112,8 +120,14 @@ $(document).ready(function() {
 		}
 
 		//get timeline data
-		rwapi.getData(timelineDimensions[0]);
-		if (isGAReady) gaapi.getData(timelineDimensions[1], 'timelineDataReady');
+		if (filters.mode!='timeline') {
+			$('.timeline-chart').parent().delay(0).queue(function(next){
+			    $(this).removeClass('nodata').addClass('loading');
+			    next();
+			});
+			rwapi.getData(timelineDimensions[0]);
+			gaapi.getData(timelineDimensions[1], 'timelineDataReady');
+		}
 	}
 
 // +--------------------------------------------------------------+
@@ -134,12 +148,12 @@ $(document).ready(function() {
 			drawBarChart(result, dimensionObj, total, sampleObj);
 		}
 	});
-	$(document).on( "gaReady", function(){
-		isGAReady = true;
-		//get timeline data
-		gaapi.getData(timelineDimensions[1], 'timelineDataReady');
-	});
 	$(document).on( "timelineDataReady", function(e, result, dimensionObj) {
+		// //format dimension name
+		// var dimension = util.formatName(dimensionObj.name);
+		// var chart = $('.' + dimension);
+		// chart.parent().stop(true).removeClass('nodata').removeClass('loading');
+		
 		drawTimelineChart(result, dimensionObj.id);
 	});
 	$(document).on( "noData", function(e, dimensionObj) {
@@ -158,6 +172,12 @@ $(document).ready(function() {
 		getCharts();
 	});
 
+
+// +--------------------------------------------------------------+
+// |                                                              |
+// |                      CHART HELPERS                           |
+// |                                                              |
+// +--------------------------------------------------------------+
 	function clearChart(obj, msg){
 		var chart = (obj.name=='') ? obj.id : obj.name;
 		var chartParent = $('.'+util.formatName(chart)).parent();
@@ -290,9 +310,6 @@ $(document).ready(function() {
 		barEnter.append('rect');
 		barEnter.append('text')
 		   	.attr('class', 'label');
-		// barEnter.append('foreignObject')
-		// 	.append('xhtml:div')
-		// 	.attr('class', 'truncate');
 		barEnter.append('text')
 		   	.attr('class', 'count');
 
@@ -311,15 +328,6 @@ $(document).ready(function() {
 		  	.attr('data-original-title', function(d) { return d.value; })
 		    .attr('dy', labelY)
 		    .text(function(d) { return util.truncateText(d.value ,truncLimit); });
-
-		// bar.select('foreignObject')
-  //           .attr({
-  //           	'x': 0,
-  //               'y': 3
-  //           })
-  //           .select('.truncate')
-  //           	.attr('class', 'truncate')
-  //           	.html(function(d) { return d.value; });
 
 		bar.select('.count')
 		   	.attr('class', 'count')
@@ -451,15 +459,6 @@ $(document).ready(function() {
 		//init tooltips
 		$('[data-toggle="tooltip"]').tooltip({ container: 'body'});
 	}
-
-	// $(window).resize(resizeCharts);
-	//    function resizeCharts(){
-	//    	width = $('.chart-container').width() - margin.left - margin.right;
-	//    	x.range([1, width-labelWidth-scrollbarWidth-countWidth]);
-	//    	d3.selectAll('.chart').selectAll('rect').each(function(d) {
-	// 	    d3.select(this).attr('width', function(d) { return x(d.count); });
-	// 	});
-	//    }
 
 	window.addEventListener('orientationchange', function() {
 		window.location.reload();

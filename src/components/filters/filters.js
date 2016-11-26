@@ -7,6 +7,7 @@
 	    currScroll: 0,
 	    timelineStartDate: '2016-04-01T00:00:00+0000',
 	    jobsExperienceID: [],
+	    mode: 'generic',
 
 	    init: function(){
 	    	filters.rwURL = 'https://api.reliefweb.int/v1/';
@@ -29,18 +30,17 @@
 	        	$('.jobs-sources, .training-sources').hide();
 	        	$('.jobs-filters, .training-filters').hide();
 			    if (util.getMetric()!='sessions') $('.dateVisitedFilter').hide(0);
+		    	
+		    	//get querystring
+        		filters.getQuery();
 			    next();
 			});
 
-	        //show filters on GA ready event
-	        $(document).on( "gaReady", function(e) {
-			    //get querystring
-	        	filters.getQuery();
 
-	        	//show filters
-	        	$('.filter-menu').animate({ opacity: 1 }, 300);
-	        	$('.filters').find('.loading').remove();
-	        });
+        	//show filters
+        	$('.filter-menu').animate({ opacity: 1 }, 300, function(){
+        		$('.filters').find('.loading').remove();
+        	});
 
 	        //mobile events
             if (util.isMobile()){
@@ -55,30 +55,25 @@
         			$(window).scrollTop(filters.currScroll);
 	            	filters.filterToggle();
 	            });
-
-	            //define scroll listener to make filter bar sticky in mobile view
-	            // $(window).scroll(function (event){
-	            //     var scroll = $(window).scrollTop();
-	            //     var limit = $('header').height();
-	            //     if (scroll >= limit){
-	            //         $('.filter-mobile').addClass('sticky-top');
-	            //     }
-	            //     else{
-	            //         $('.filter-mobile').removeClass('sticky-top');
-	            //     }
-	            // });
             }
+
+            //send filters ready event
+            $(document).trigger("filtersReady");
 	    },
 
 	    //mobile filter toggle 
 	    filterToggle: function(){
         	if ($('.filters').hasClass('expanded')){
         		$('.filters').removeClass('expanded');
-        		$('.filters').animate({top: '100vh'}, 350, 'swing');
+        		//$('.filters').animate({top: '100vh'}, 350, 'swing');
+        		$('.filters').hide('fast');
         	}
         	else{
 	    		$('.filters').addClass('expanded');
-        		$('.filters').animate({top: '0'}, 350, 'swing', function(){
+        		// $('.filters').animate({top: '0'}, 350, 'swing', function(){
+        		// 	$(window).scrollTop(0);
+        		// });
+        		$('.filters').show('fast', function(){
         			$(window).scrollTop(0);
         		});
         	}
@@ -118,12 +113,12 @@
 	        }
 
 	        //get RW filters
-	        var reportsArr =  [{field: 'theme', filter: '.themes-dropdown'},
+	        var reportsArr  = [{field: 'theme', filter: '.themes-dropdown'},
 	        		     	   {field: 'format', filter: '.format-dropdown'},
 	        		     	   {field: 'disaster_type', filter: '.disasterType-dropdown'},
 	        		     	   {field: 'vulnerable_groups', filter: '.vulnerableGroups-dropdown'}];
 
-	        var jobsArr = 	  [{field: 'type', filter: '.jobtype-dropdown'},
+	        var jobsArr     = [{field: 'type', filter: '.jobtype-dropdown'},
 	        		     	   {field: 'career_categories', filter: '.careerCategory-dropdown'}];
 
 	        var trainingArr = [{field: 'career_categories', filter: '.trainingCareerCategory-dropdown'},
@@ -195,11 +190,13 @@
 	        	autoclose: true,
 	        	clearBtn: true,
 	        	disableTouchKeyboard: true,
-	        	format: 'yyyy-mm-dd',
-	        	startDate: '1996-01-01',
-	        	endDate: '0d'
+	        	format: 'yyyy-mm',
+	        	viewMode: 1,
+	        	minViewMode: 1,
+	        	startDate: '1996-01',
+	        	endDate: '0m'
 	        }).on('clearDate', function(e){
-	        	$('.input-daterange input').each(function() {
+	        	$(this).find('input').each(function() {
 				    $(this).datepicker('clearDates');
 				});
 	        });
@@ -209,20 +206,20 @@
 	        	autoclose: true,
 	        	clearBtn: true,
 	        	disableTouchKeyboard: true,
-	        	format: 'yyyy-mm-dd',
-	        	startDate: '2016-04-01',
-	        	endDate: '0d'
+	        	format: 'yyyy-mm',
+	        	viewMode: 1,
+	        	minViewMode: 1,
+	        	startDate: '2016-04',
+	        	endDate: '0m'
 	        }).on('clearDate', function(e){
-	        	$('.input-daterange input').each(function() {
+	        	$(this).find('input').each(function() {
 				    $(this).datepicker('clearDates');
 				});
 	        });
 
 	        $('.submit-btn').click(function(){
 	        	var daterange = $(this).parent().find('.input-daterange');
-	        	if (daterange.find('input').val()!=''){
-	        		filters.onFilterSelect(daterange);
-	        	}
+	        	filters.onFilterSelect(daterange, 'filterdate');
 	        });
 
 	        // dropdown select listener
@@ -248,21 +245,21 @@
 				$('.dateVisitedFilter').show(0);
 			}
 
-			//set query
-			var uri = new URI();
-			uri.setQuery('metric', util.getMetric());
-			window.history.pushState('object', 'title', uri);
+			//set date filter values
+			$('#dateVisitedPicker').data("datepicker").pickers[0].setDate(new Date(util.formatPickerDate(filters.filterParams.visited_startDate)));
+			$('#dateVisitedPicker').data("datepicker").pickers[1].setDate(new Date(util.formatPickerDate(filters.filterParams.visited_endDate)));
 
 			//apply filters
             filters.applyFilters();
+
+			//add to query string
+			filters.setQuery();
 	    },
 
 	    onFilterSelect: function(target){
 			filters.filterParams.metric = util.getMetric();
     		filters.filterParams.content_type = $('.content_type-dropdown').val();
             filters.filterParams.dimensions = [];
-            filters.filterParams.created_startDate = '';
-	        filters.filterParams.created_endDate = '';
             $.each($('.dropdown'), function(id, item) {
             	var val = $(item).val();
                 if ($(item).is(':visible') && $(item).val()!="All"){
@@ -285,9 +282,33 @@
 
             //get date range input values
             if ($(target).hasClass('input-daterange') && $(target).is(':visible')){
-        		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = util.formatDate($(target).find('.start-date').val());
-            	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = util.formatDate($(target).find('.end-date').val());
+            	var dateObj = {};
+            	if ($(target).find('.start-date').val()!=''){
+            		//default start date to 1st of month
+	            	var start = $(target).find('.start-date').val() + '-01';
+	            	dateObj.start = util.formatDate(start);
+
+	            	//default end date to last day of month
+	            	var end = ($(target).attr('id').indexOf('Created')>-1) ? $(target).find('.start-date').val() : $(target).find('.end-date').val();
+	            	var e = end.split('-');
+	            	end += '-' + util.getDaysInMonth(e[0], e[1]);
+	            	dateObj.end = util.formatDate(end);
+            	}
+            	else{
+            		dateObj = filters.resetDateFilter(target);
+            	}
+
+        		filters.filterParams[$(target).attr('data-mode')+'_startDate'] = dateObj.start;
+            	filters.filterParams[$(target).attr('data-mode')+'_endDate'] = dateObj.end;
+            	filters.mode = 'timeline';
         	}
+        	else{
+        		filters.mode = 'generic';
+        	}
+
+        	//save date created to dimension array
+        	var created_date = $('#dateCreatedPicker').find('.start-date').val();
+        	if (created_date!='' && created_date!=undefined) filters.filterParams.dimensions.push({dimension:$('#dateCreatedPicker').attr('data-dimension'), gadimension:$('#dateCreatedPicker').attr('data-gadimension'), value:created_date});
 
   			//send the apply filters event
             filters.applyFilters();
@@ -358,12 +379,16 @@
 						}
 						else{
 							//set date filters
-	    					var r = result[key].split('T');
-	    					var date = r[0].replace(/-/g, '\/').replace(/T.+/, '');
-	    					$('[data-mode="' + key.split('_')[0] + '"]').data("datepicker").pickers[1].setDate(new Date(date));
+	    		 			var id = (key.indexOf('end')>-1) ? 1 : 0;
+	    		 			var date = util.formatPickerDate(result[key]);
+							$('#'+key).parent().data("datepicker").pickers[id].setDate(new Date(date));
 
      						//save params to filter object
 							filters.filterParams[key] = result[key];
+
+							//save date created to dimension array
+							var d = result[key].split('-')[0]+'-'+result[key].split('-')[1];
+        					if (key=='created_startDate') filters.filterParams.dimensions.push({dimension:$('#dateCreatedPicker').attr('data-dimension'), gadimension:$('#dateCreatedPicker').attr('data-gadimension'), value:d});
 						}
 	    			}
 	    		}
@@ -375,6 +400,7 @@
 	    	filters.clearQuery();
 	    	var uri = new URI(); 
 	    	var params = filters.filterParams;
+	    	uri.setQuery('metric', util.getMetric());
 	    	for (var key in params) {
 	    		if (params.hasOwnProperty(key) && params[key]!='') {
 	    		  	if ($.isArray(params[key])){
@@ -406,8 +432,24 @@
 			filters.setContentTypeFilters('reports');
 			var d = util.getStartEndDate();
  	       	filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, created_startDate: '', created_endDate: '', dimensions:[]};
+    		$('#dateCreatedPicker input').datepicker('clearDates');
+    		$('#dateVisitedPicker input').datepicker('clearDates');
     		filters.clearQuery();       
             filters.applyFilters();
+	    },
+
+	    resetDateFilter: function(input){
+	    	var dateObj = {};
+	    	if (input.attr('id').indexOf('Created')>-1){
+	    		dateObj.start = '';
+	    		dateObj.end = '';
+	    	}
+	    	else{
+	    		var d = util.getStartEndDate();
+            	dateObj.start = d.start_date;
+            	dateObj.end = d.end_date;
+	    	}
+	    	return dateObj;
 	    },
 
 	    setFilter: function(filter, value){

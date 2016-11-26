@@ -38,12 +38,6 @@
 }
 
 .filter-mobile{
-	// .filter-toggle{
-	// 	right: 5px;
-	// }
-	// h4{
-	// 	margin: 0 -15px;
-	// }
 	left: 0;
 	position: fixed;
 	right: 0;
@@ -118,37 +112,37 @@
 	}
 }
 
-.created-month-dropdown + .select2,
-.month-dropdown + .select2{
-	margin-right: 7px;
-}
+// .created-month-dropdown + .select2,
+// .month-dropdown + .select2{
+// 	margin-right: 7px;
+// }
 
-.time-filter-container{
-	margin: -20px auto 12px;
-	width: 97%;
-	.time-filter-component{
-	}
-}
+// .time-filter-container{
+// 	margin: -20px auto 12px;
+// 	width: 97%;
+// 	.time-filter-component{
+// 	}
+// }
 
-.irs-min, 
-.irs-max,
-.irs-bar,
-.irs-bar-edge{
-	display: none;
-}
+// .irs-min, 
+// .irs-max,
+// .irs-bar,
+// .irs-bar-edge{
+// 	display: none;
+// }
 
-.irs-single{
-	background: $blue-highlight;
-	line-height: 10px;
-	padding: 4px 5px;
-	&:after{
-		border-top-color: $blue-highlight;
-	}
-}
+// .irs-single{
+// 	background: $blue-highlight;
+// 	line-height: 10px;
+// 	padding: 4px 5px;
+// 	&:after{
+// 		border-top-color: $blue-highlight;
+// 	}
+// }
 
-.irs-grid-pol{
-	background: $grey-9;
-}
+// .irs-grid-pol{
+// 	background: $grey-9;
+// }
 
 
 //datepicker styles
@@ -233,16 +227,23 @@
 		}
 	}
 }
+#dateCreatedPicker{
+	.input-group-addon,
+	.end-date{
+		display: none;
+	}
+}
 
 
 
 @media (max-width: $screen-sm){
 	.filters{
+		display: none;
 		height: 100vh;
 		left: 0;
 		padding: 0;
 		position: fixed;
-		top: 100vh;
+		top: 0;//100vh;
 		width: 100%;
 		z-index: 1031;
 		> h4{

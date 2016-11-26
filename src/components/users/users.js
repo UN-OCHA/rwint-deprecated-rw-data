@@ -11,8 +11,7 @@ $(document).ready(function() {
     var intervalDelay = 1000;
     var truncLimit = 22;
 
-
-	$(document).on( "gaReady", userDataInit );
+	$(document).on( "filtersReady", userDataInit );
 	createCharts( ".user-container", userDimensions );
 	
 	function userDataInit(){
@@ -20,7 +19,6 @@ $(document).ready(function() {
 
 		//define data events
 		$(document).on( "userDataReady", function(e, result, dimensionObj, total, sampleObj, topTotal) {
-			//console.log('userDataReady', dimensionObj.name);
 			//format dimension name
 			var dimension = util.formatName(dimensionObj.name);
 			var chart = $('.' + dimension);
@@ -32,7 +30,7 @@ $(document).ready(function() {
 		    	drawBarChart(result, dimensionObj, sampleObj, topTotal);
 		});
 		$(document).on( "applyFilters", function(e) {
-			loadInterval = setInterval(checkGALoad, intervalDelay);
+			getUserCharts();
 		});	
 
 		var w = $('body').width();
@@ -53,15 +51,6 @@ $(document).ready(function() {
 	    }
 	}
 
-	function checkGALoad(){
-		if (gaapi.loadCount >= 4){
-		}
-		else{
-			clearInterval(loadInterval);
-			getUserCharts();
-		}
-	}
-
 	function createCharts(container, dimensions){
 		$(container).append('<h2>User Data</h2>');
 		for (var i=0; i<dimensions.length; i++){
@@ -71,7 +60,7 @@ $(document).ready(function() {
 
 	function getUserCharts(){
 		$('.user-chart').parent().removeClass('nodata').addClass('loading');
-		$('.user-container').find('h2').html('User Data <span>(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')</span>');
+		$('.user-container').find('h2').html('User Data <span>(' + util.getVisitedDateRange() + ')</span>');
 		for (var i=0; i<userDimensions.length; i++){
 			gaapi.getData(userDimensions[i], 'userDataReady', userDimensions[i].count);
 		}
