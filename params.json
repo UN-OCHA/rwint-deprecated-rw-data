@@ -1,6 +1,6 @@
 {
-  "name": "Rw-trends-v3",
+  "name": "Rw-data",
   "tagline": "ReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API)",
-  "body": "# rw-trends-v3\r\nReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API)\r\n",
+  "body": "# rw-data\r\nReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API)\r\n",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }

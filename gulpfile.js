@@ -160,7 +160,13 @@ gulp.task('copy-resources', ['rebuild-paths'], function() {
     var assets = gulp.src('src/assets/**/*')
         .pipe(gulp.dest('dist'));
 
-    return merge(js, data, assets);
+    var config = gulp.src([
+        'src/CNAME',
+        'params.json',
+        'README.md'])
+        .pipe(gulp.dest('dist'));
+
+    return merge(js, data, assets, config);
 });
 
 gulp.task('js', ['rebuild-paths'], function() {
