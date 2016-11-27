@@ -38,7 +38,7 @@
         var apiURL = 'https://rw-data-backend.herokuapp.com';
         var url = apiURL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
 
-        console.log(url);
+        //console.log(url);
 
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);

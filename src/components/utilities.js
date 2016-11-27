@@ -14,9 +14,9 @@ var Util = function() {
 			var d = new Date();
 		    var currYear = d.getFullYear();
 		    var currMth = d.getMonth()+1;
-		    var currDay = d.getDate();
+		    var daysinCurrMth = self.getDaysInMonth(currYear, currMth);
 			var start = self.formatDate(currYear + '-' + ("00" + currMth).slice(-2) + '-01');
-			var end = self.formatDate(currYear + '-' + ("00" + currMth).slice(-2) + '-' + ("00" + currDay).slice(-2));
+			var end = self.formatDate(currYear + '-' + ("00" + currMth).slice(-2) + '-' + ("00" + daysinCurrMth).slice(-2));
 			return { 'start_date': start, 'end_date': end };
 		},
 	    formatDate: function(d) {
