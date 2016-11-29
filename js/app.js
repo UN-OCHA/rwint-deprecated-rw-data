@@ -1152,16 +1152,6 @@ $(document).ready(function() {
 			createCharts('.contenttype-container', contentDimensions, currentContentType);
 		}
 
-		//get data
-		for (var i=0; i<dimensions.length; i++){
-			if (util.getMetric() == "sessions"){
-				gaapi.getData(dimensions[i]);
-			}
-			else{
-				rwapi.getData(dimensions[i]);
-			}
-		}
-
 		//get timeline data
 		if (filters.mode!='timeline') {
 			$('.timeline-chart').parent().delay(0).queue(function(next){
@@ -1170,6 +1160,16 @@ $(document).ready(function() {
 			});
 			rwapi.getData(timelineDimensions[0]);
 			gaapi.getData(timelineDimensions[1], 'timelineDataReady');
+		}
+
+		//get data
+		for (var i=0; i<dimensions.length; i++){
+			if (util.getMetric() == "sessions"){
+				gaapi.getData(dimensions[i]);
+			}
+			else{
+				rwapi.getData(dimensions[i]);
+			}
 		}
 	}
 
