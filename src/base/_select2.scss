@@ -3,7 +3,7 @@
 }
 .select2-container{
 	max-width: 247px;
-	//min-width: 247px;
+	min-width: 247px;
 }
 .select2-container--default{
 	.select2-results__option--highlighted[aria-selected]{
@@ -23,6 +23,9 @@
 				font-weight: 800;
 			}
 		}
+	}
+	.select2-dropdown{
+		min-width: 247px;
 	}
 	.select2-search--dropdown .select2-search__field{
 		background-color: #fafaf9;

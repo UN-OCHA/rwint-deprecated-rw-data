@@ -166,7 +166,12 @@ gulp.task('copy-resources', ['rebuild-paths'], function() {
         'README.md'])
         .pipe(gulp.dest('dist'));
 
-    return merge(js, data, assets, config);
+    var maps = gulp.src([
+        './node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css.map',
+        './node_modules/bootstrap/dist/css/bootstrap.min.css.map'])
+        .pipe(gulp.dest('dist/styles'));
+
+    return merge(js, data, assets, config, maps);
 });
 
 gulp.task('js', ['rebuild-paths'], function() {
