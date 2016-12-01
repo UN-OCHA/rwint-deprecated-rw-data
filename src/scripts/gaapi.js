@@ -31,11 +31,8 @@
           });
         }
 
-        // var createdDate = (filterParams.created_startDate=='' || filterParams.created_startDate==undefined) ? '' : '&created_startDate='+gaapi.formatDate(filterParams.created_startDate);
-        // createdDate += (filterParams.created_endDate=='' || filterParams.created_endDate==undefined) ? '' : '&created_endDate='+gaapi.formatDate(filterParams.created_endDate);
-
         //var apiURL = 'http://localhost:8080';
-        var apiURL = 'https://rw-data-backend.herokuapp.com';
+        var apiURL = 'https://backend.rwdata.rwlabs.org';
         var url = apiURL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
 
         //console.log(url);
