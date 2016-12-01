@@ -83,7 +83,9 @@ $(document).ready(function() {
 		if (util.getMetric()=='sessions') {
 			//$('.generic-container, .contenttype-container').find('h2 span').html('(' + filters.filterParams.visited_startDate.split('T')[0] + ' to ' + filters.filterParams.visited_endDate.split('T')[0] + ')');
 			$('.generic-container, .contenttype-container').find('h2 span').html('(' + util.getVisitedDateRange() + ')');
-
+		}
+		else {
+			$('.generic-container, .contenttype-container').find('h2 span').html('');
 		}
 		$('.generic-chart').parent().delay(0).queue(function(next){
 		    $(this).removeClass('nodata').addClass('loading');
