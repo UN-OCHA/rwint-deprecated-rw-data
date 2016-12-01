@@ -23,8 +23,8 @@
             }
             else{
               if (val.value!='' && val.value!=undefined){
-                //dimension7 == source, need to split concatenated long value from short value
-                var dimensionValue = (val.gadimension=='dimension7') ? val.value.split(' (')[0] : val.value
+                //dimension7 == source or dimension6 == country need to split concatenated long value from short value
+                var dimensionValue = (val.gadimension=='dimension7' || val.gadimension=='dimension6') ? val.value.split(' (')[0] : val.value
                 dimensionStr += '&dimension-'+val.gadimension+'='+encodeURIComponent(dimensionValue);
               }
             }
