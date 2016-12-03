@@ -88,6 +88,7 @@ $(document).ready(initUtil);
 	    timelineStartDate: '2016-04-01T00:00:00+0000',
 	    jobsExperienceID: [],
 	    mode: 'generic',
+	    GIT_URL: '',
 
 	    init: function(){
 	    	//init filter vars
@@ -173,7 +174,6 @@ $(document).ready(initUtil);
 
 
 	        //set filters with cached data from RW github
-	        var gitDataURL = 'https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/';
 	        var gitArr = [{data: 'countries.json', filter: '.country-dropdown'},
 	        		      {data: 'sources-reports-active.json', filter: '#reportsSourcesFilter'},
 	        		      {data: 'sources-jobs-active.json', filter: '#jobsSourcesFilter'},
@@ -181,7 +181,7 @@ $(document).ready(initUtil);
 	        		      {data: 'disasters.json', filter: '.disaster-dropdown'}];
 	        for (var i=0;i<gitArr.length;i++){
 	        	(function(i) {
-			        $.getJSON(gitDataURL + gitArr[i].data, function(obj) {
+			        $.getJSON(filters.GIT_URL + gitArr[i].data, function(obj) {
 			            $.each(obj, function(key, val) {
 			                var value = (val.fields.shortname!=undefined && val.fields.name != val.fields.shortname) ? val.fields.name + ' (' + val.fields.shortname + ')' : val.fields.name;
 			                $(gitArr[i].filter).append("<option>" + value + "</option>");
@@ -1076,6 +1076,7 @@ $(document).ready(function() {
 		//load config file		
     	$.getJSON('config.json', function(obj) {
             rwapi.RW_URL = obj['rw-api-url'];
+          	filters.GIT_URL = obj['github-data-url'];
             gaapi.GA_URL = obj['ga-api-url'];
             gaapi.QUOTA_ID = util.randomStr(6);
 			filters.init();

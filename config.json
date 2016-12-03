@@ -1,4 +1,5 @@
 {
   "rw-api-url": "https://api.reliefweb.int/v1/",
-  "ga-api-url": "https://backend.rwdata.rwlabs.org"
+  "ga-api-url": "https://backend.rwdata.rwlabs.org",
+  "github-data-url": "https://raw.githubusercontent.com/reliefweb/rw-trends-v3/data/"
 }
