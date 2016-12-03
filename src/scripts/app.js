@@ -37,6 +37,7 @@ $(document).ready(function() {
 		//load config file		
     	$.getJSON('config.json', function(obj) {
             rwapi.RW_URL = obj['rw-api-url'];
+          	filters.GIT_URL = obj['github-data-url'];
             gaapi.GA_URL = obj['ga-api-url'];
             gaapi.QUOTA_ID = util.randomStr(6);
 			filters.init();
