@@ -84,15 +84,12 @@ $(document).ready(initUtil);
 
 	    filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
 	    contentType: 'reports',
-	    rwURL: '',
 	    currScroll: 0,
 	    timelineStartDate: '2016-04-01T00:00:00+0000',
 	    jobsExperienceID: [],
 	    mode: 'generic',
 
 	    init: function(){
-	    	filters.rwURL = 'https://api.reliefweb.int/v1/';
-
 	    	//init filter vars
 	        var d = util.getStartEndDate();
             filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, dimensions:[]};
@@ -208,7 +205,7 @@ $(document).ready(initUtil);
 	        		     	   {field: 'format', filter: '.trainingFormat-dropdown'}];
 	        
 	       	//reports filters
-	        var reportsQuery = filters.rwURL + 'reports?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var reportsQuery = rwapi.RW_URL + 'reports?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<reportsArr.length;i++){
 	        	reportsQuery = reportsQuery + '&facets['+i+'][field]='+reportsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -222,7 +219,7 @@ $(document).ready(initUtil);
 	        });
 
 	        //jobs filters
-	        var jobsQuery = filters.rwURL + 'jobs?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var jobsQuery = rwapi.RW_URL + 'jobs?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<jobsArr.length;i++){
 	        	jobsQuery = jobsQuery + '&facets['+i+'][field]='+jobsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -236,7 +233,7 @@ $(document).ready(initUtil);
 	        });
 
 	        //training filters
-	        var trainingQuery = filters.rwURL + 'training?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var trainingQuery = rwapi.RW_URL + 'training?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<trainingArr.length;i++){
 	        	trainingQuery = trainingQuery + '&facets['+i+'][field]='+trainingArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -250,9 +247,8 @@ $(document).ready(initUtil);
 	        });
 
 	        //get jobs experience filters
-	        filters.rwURL = filters.rwURL + 'jobs?appname=rw-trends-v2';
-	        var experienceData = filters.rwURL + 'jobs?appname=rw-trends-v2&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
-	        $.getJSON(experienceData, function(obj) {
+	        var experienceQuery = rwapi.RW_URL + 'jobs?appname=rw-trends-v2&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
+	        $.getJSON(experienceQuery, function(obj) {
 	        	var exp = obj.embedded.facets['experience'].data;
 	        	var expid = obj.embedded.facets['experience.id'].data;
 	        	for (var i=0;i<expid.length;i++){
@@ -1077,9 +1073,14 @@ $(document).ready(function() {
 	init();
 
 	function init(){
-		gaapi.QUOTA_ID = util.randomStr(6);
+		//load config file		
+    	$.getJSON('config.json', function(obj) {
+            rwapi.RW_URL = obj['rw-api-url'];
+            gaapi.GA_URL = obj['ga-api-url'];
+            gaapi.QUOTA_ID = util.randomStr(6);
+			filters.init();
+        });
 		$(document).on( 'filtersReady', createDashboard);
-		filters.init();
 	}
 
 	function createDashboard(){    
@@ -1557,6 +1558,7 @@ if (!window.ExportData) {
   var gaapi = window.gaapi = {
     EXPRESSION: "sessions",
     QUOTA_ID: "",
+    GA_URL: "",
 
     getData: function(dimensionObj, eventCallback, pageSize){
       eventCallback = (eventCallback==undefined) ? 'dataReady' : eventCallback;
@@ -1587,8 +1589,8 @@ if (!window.ExportData) {
         }
 
         //var apiURL = 'http://localhost:8080';
-        var apiURL = 'https://backend.rwdata.rwlabs.org';
-        var url = apiURL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
+        //var apiURL = 'https://backend.rwdata.rwlabs.org';
+        var url = gaapi.GA_URL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
 
         //console.log(url);
 
@@ -3287,9 +3289,9 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 
 (function() {
 	var rwapi = window.rwapi = {
+		RW_URL: "",
 
 		getData: function(dimensionObj){
-			//console.log('getRWData',dimensionObj.name);
 			var filterParams = filters.filterParams;
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
@@ -3335,7 +3337,7 @@ function readFileUTF8(a){return require("fs").readFileSync(a,"utf8")}function re
 			//if (dimension=="date.created") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
-			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
+			var url = rwapi.RW_URL + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function(){
 				if (xhr.readyState === 4) {
