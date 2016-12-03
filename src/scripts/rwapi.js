@@ -1,8 +1,8 @@
 (function() {
 	var rwapi = window.rwapi = {
+		RW_URL: "",
 
 		getData: function(dimensionObj){
-			//console.log('getRWData',dimensionObj.name);
 			var filterParams = filters.filterParams;
 			var dimension = dimensionObj.name;
 			var conditionArr = [];
@@ -48,7 +48,7 @@
 			//if (dimension=="date.created") console.log(JSON.stringify(rwQuery));
 
 			//send RW query
-			var url = "https://api.reliefweb.int/v1/" + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
+			var url = rwapi.RW_URL + filterParams.content_type + '?appname=rw-trends-v2&preset=analysis';
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function(){
 				if (xhr.readyState === 4) {

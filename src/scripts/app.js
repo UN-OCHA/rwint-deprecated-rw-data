@@ -34,9 +34,14 @@ $(document).ready(function() {
 	init();
 
 	function init(){
-		gaapi.QUOTA_ID = util.randomStr(6);
+		//load config file		
+    	$.getJSON('config.json', function(obj) {
+            rwapi.RW_URL = obj['rw-api-url'];
+            gaapi.GA_URL = obj['ga-api-url'];
+            gaapi.QUOTA_ID = util.randomStr(6);
+			filters.init();
+        });
 		$(document).on( 'filtersReady', createDashboard);
-		filters.init();
 	}
 
 	function createDashboard(){    

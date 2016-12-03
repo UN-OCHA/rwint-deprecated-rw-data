@@ -162,6 +162,7 @@ gulp.task('copy-resources', ['rebuild-paths'], function() {
 
     var config = gulp.src([
         'src/CNAME',
+        'config.json',
         'params.json',
         'README.md'])
         .pipe(gulp.dest('dist'));

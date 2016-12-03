@@ -3,15 +3,12 @@
 
 	    filterParams: { content_type: '', visited_startDate: '', visited_endDate: '', created_startDate: '', created_endDate: '', dimensions:[]},
 	    contentType: 'reports',
-	    rwURL: '',
 	    currScroll: 0,
 	    timelineStartDate: '2016-04-01T00:00:00+0000',
 	    jobsExperienceID: [],
 	    mode: 'generic',
 
 	    init: function(){
-	    	filters.rwURL = 'https://api.reliefweb.int/v1/';
-
 	    	//init filter vars
 	        var d = util.getStartEndDate();
             filters.filterParams = { content_type: 'reports', visited_startDate: d.start_date, visited_endDate: d.end_date, dimensions:[]};
@@ -127,7 +124,7 @@
 	        		     	   {field: 'format', filter: '.trainingFormat-dropdown'}];
 	        
 	       	//reports filters
-	        var reportsQuery = filters.rwURL + 'reports?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var reportsQuery = rwapi.RW_URL + 'reports?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<reportsArr.length;i++){
 	        	reportsQuery = reportsQuery + '&facets['+i+'][field]='+reportsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -141,7 +138,7 @@
 	        });
 
 	        //jobs filters
-	        var jobsQuery = filters.rwURL + 'jobs?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var jobsQuery = rwapi.RW_URL + 'jobs?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<jobsArr.length;i++){
 	        	jobsQuery = jobsQuery + '&facets['+i+'][field]='+jobsArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -155,7 +152,7 @@
 	        });
 
 	        //training filters
-	        var trainingQuery = filters.rwURL + 'training?appname=rw-trends-v2&preset=analysis&limit=0';
+	        var trainingQuery = rwapi.RW_URL + 'training?appname=rw-trends-v2&preset=analysis&limit=0';
 	        for (var i=0;i<trainingArr.length;i++){
 	        	trainingQuery = trainingQuery + '&facets['+i+'][field]='+trainingArr[i].field+'&facets['+i+'][sort]=value:asc&facets['+i+'][limit]=20';
 	        }
@@ -169,9 +166,8 @@
 	        });
 
 	        //get jobs experience filters
-	        filters.rwURL = filters.rwURL + 'jobs?appname=rw-trends-v2';
-	        var experienceData = filters.rwURL + 'jobs?appname=rw-trends-v2&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
-	        $.getJSON(experienceData, function(obj) {
+	        var experienceQuery = rwapi.RW_URL + 'jobs?appname=rw-trends-v2&facets[0][field]=experience.id&facets[0][sort]=value:asc&facets[1][field]=experience&facets[1][limit]=20&limit=0';
+	        $.getJSON(experienceQuery, function(obj) {
 	        	var exp = obj.embedded.facets['experience'].data;
 	        	var expid = obj.embedded.facets['experience.id'].data;
 	        	for (var i=0;i<expid.length;i++){

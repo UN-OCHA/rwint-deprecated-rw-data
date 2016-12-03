@@ -2,6 +2,7 @@
   var gaapi = window.gaapi = {
     EXPRESSION: "sessions",
     QUOTA_ID: "",
+    GA_URL: "",
 
     getData: function(dimensionObj, eventCallback, pageSize){
       eventCallback = (eventCallback==undefined) ? 'dataReady' : eventCallback;
@@ -32,8 +33,8 @@
         }
 
         //var apiURL = 'http://localhost:8080';
-        var apiURL = 'https://backend.rwdata.rwlabs.org';
-        var url = apiURL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
+        //var apiURL = 'https://backend.rwdata.rwlabs.org';
+        var url = gaapi.GA_URL+'/api/query?quotaID='+gaapi.QUOTA_ID+'&visited_startDate='+startDate+'&visited_endDate='+endDate+'&chart='+dimensionObj.id+'&metric='+gaapi.EXPRESSION+'&pageSize='+pageSize+dimensionStr;
 
         //console.log(url);
 
