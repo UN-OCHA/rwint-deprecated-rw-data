@@ -1,6 +1,7 @@
 # rw-data 
 
-ReliefWeb Data Snapshots for analyzing content and user visits (Powered by RW API and GA API)
+ReliefWeb Data Snapshots for analyzing content and user visits (Powered by RW API and GA API)  
+This branch stores the source files for the Data Snapshot dashboard.
 
 ### Development Tools   
 1. node 6.2.0           
