@@ -1,10 +1,24 @@
 # rw-data 
 
-ReliefWeb Data for analyzing content and user visits (Powered by RW API and GA API).    
-Branch serving the public pages of the frontend in github pages.
+ReliefWeb Data Snapshot for analyzing content and user visits (Powered by RW API and GA API).    
+Branch serving the public facing pages of the Data Snapshot dashboard.
 
-Clone the project - run: `git clone https://github.com/reliefweb/rw-data.git`  
-Get project dependencies - run: `npm install`      
-Specify data API urls in the `config.json` file    
-Build the project - run: `npm start`    
-Point your browser to [http://localhost:9000/](http://localhost:9000/ )
+# About the Project
+
+#### img/
+Stores all the images, logos, and icons used across the site
+
+#### js/
+Bundled js file with all the custom client-side javascript 
+
+#### styles/
+Compiled css files used across the site
+
+#### vendors/
+All third party javascript libraries
+
+#### index.html
+Contains all the markup for the dashboard
+
+#### config.js
+Specifies the external data API hooks for ReliefWeb API, Google Analytics API, and github data files
