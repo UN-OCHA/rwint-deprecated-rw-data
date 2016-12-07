@@ -17,5 +17,5 @@ Build the source - run: `npm start`
 Point your browser to [http://localhost:9000/](http://localhost:9000/)            
 
 ### Deploy the Project  
-Deploy to gh-pages branch - run: `gulp deploy`
+Deploy to gh-pages branch - run: `gulp deploy`           
 Point your browser to [http://rwdata.rwlabs.org/](http://rwdata.rwlabs.org/)
